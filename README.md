@@ -38,6 +38,8 @@ b.resistor(3, R.c, 8, R.c);
 
 puts a resistor from hole 3c to hole 8c.
 
+Every board is drawn twice, isometric and top-down (`out/<key>-top.svg`), and a toggle at the top of the page switches all of them at once.
+
 Hovering or focusing a tag shows the part's type and value and highlights it on the board. The text comes from each board's `info` map in `circuits.mjs`.
 
 Tags are placed automatically, except on the amplifier board, whose tags are pinned in `circuits.mjs`. To pin one by hand, create `pills.json` like `{"rl": {"L1": [360, 240]}}`; entries there override pins in code.

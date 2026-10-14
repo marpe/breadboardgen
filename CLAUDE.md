@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Static generator for `out/labb5.html`, a single-page guide to the TNE108 Labb 5 circuits. Each circuit gets a schematic and an isometric breadboard drawing (inline SVG), a node table and info cards. Plain Node (ESM `.mjs`, no dependencies, no `package.json`) and Python 3 standard library. There are no tests and no linter.
+Static generator for `out/labb5.html`, a single-page guide to the TNE108 Labb 5 circuits. Each circuit gets a schematic and a breadboard drawing in two views, isometric and top-down (inline SVGs), plus a node table and info cards. Plain Node (ESM `.mjs`, no dependencies, no `package.json`) and Python 3 standard library. There are no tests and no linter.
 
 ## Commands
 
 ```
 ./build.sh                       # full build -> out/ (git-ignored)
-node circuits.mjs                # breadboard SVGs only -> out/{led,rl,rc,amp,ast4,ast5}.svg
+node circuits.mjs                # breadboard SVGs only -> out/<key>.svg and out/<key>-top.svg
 python sch_ast.py                # astable schematics -> out/sch_ast{4,5}.svg
 python build_labb5.py            # assemble out/labb5.html (needs the two steps above first)
 python prev.py out/rl.svg rl.png # PNG preview, needs `pip install cairosvg`
@@ -24,7 +24,7 @@ To check a refactor, build before and after and `cmp` the SVGs in `out/`. Unchan
 
 ## Pipeline
 
-1. `circuits.mjs` builds each breadboard with `makeBoard()` from `lib.mjs` and writes `out/<key>.svg`.
+1. `circuits.mjs` builds each breadboard twice with `makeBoard()` from `lib.mjs`, once per view, and writes `out/<key>.svg` (isometric) and `out/<key>-top.svg`. Each board is a function of `view` and is called from the loop at the bottom of the file.
 2. `sch_ast.py` draws the two astable schematics. The other schematics are hand-written files in `schematics/`.
 3. `build_labb5.py` concatenates `page-head.html` (title, fonts, CSS) with the generated body. All page text lives here: the `section(...)` calls carry ledes, node tables and cards. Section ids (`led`, `rl`, `rc`, `amp`, `ast4`, `ast5`) match the SVG keys and the `nav_items` anchors.
 
@@ -44,14 +44,22 @@ When you add a class or variable to an SVG, define it in `page-head.html` for bo
 - Calling `hole(c, v)` (done by every part, wire and probe) records the hole, and each recorded hole gets an orange "in use" ring.
 - Render layers, in order: board → tints → hole rings → `draws` (parts and jumpers, sorted by depth `u + v` plus a small per-part offset for isometric overlap) → `overlay` (instrument boxes, wires, probes) → tags.
 - Each part pushes sample points into `obs` (obstacles). The tag auto-placer scores candidate positions on rings around each anchor and penalises obstacles, overlap with other tags, and leaders crossing other tags. Tags with fixed positions are placed first.
-- Part functions return an anchor point, which callers store in `b.anchors[key]`. Each part registers its drawing through `part()`, keyed by that returned anchor array (a `WeakMap`). That is how tag `R1` finds the drawing to highlight, so a new part function must end with `return part(depth, s, anchor)` and return a fresh array.
+- Part functions return an anchor point, which callers store in `b.anchors[key]`. Each part registers its drawing through `part()`, keyed by that returned anchor array (a `WeakMap`). That is how tag `R1` finds the drawing to highlight, so a new part function must end with `return part(depth, s, anchor)` and return a fresh array. It must also be wrapped in `def()` in the returned object, which records the obstacle points it added as its footprint, so tooltips avoid covering it.
+
+## Views
+
+`makeBoard({ view: "top" })` swaps `P` for a flat projection `[X0 + u·S, Y0 + v·S]` that ignores `h`. Defaults: `S` = 24, board centred, and `b.height` (fitted to the board) is used as the viewBox height.
+- Resistors, inductors, jumpers and wires need no special code; with `h` ignored they draw flat on their own. `ecap`, `film`, `led`, `pot` and `transistor` have an `if (flat)` branch with a top-down body, sized relative to `S`.
+- In the flat view the "in use" rings are drawn above the parts, because bodies cover their own pins from above. The pot body is offset below its pins, and probes are shortened.
+- Instrument boxes are in screen coordinates and shared by both views. The flat board starts at `Y0 = 150`, below the boxes along the top; a board with a box on its left side (the amplifier) passes its own `X0`.
+- The page toggle is CSS-only: a radio group in `build_labb5.py` with `main:has(input[value="top"]:checked)` rules in `page-head.html` that swap `.view-iso` and `.view-top`.
 
 ## Tags (pills)
 
 `finish(key, b, { names, info, pinned, VH, title, desc })` in `circuits.mjs`:
 - `names` is a list of `[label, anchorKey, cssClass?]` entries. Labels can repeat (e.g. two `R1` tags on different anchors); anchor keys must be unique.
 - `info[anchorKey]` is `[type, value]` for the hover tooltip, e.g. `["Resistor", "27 kΩ"]`. Take values from the schematics and the cards in `build_labb5.py`; they must agree. A tag without `info` is not focusable and gets no tooltip.
-- Position precedence: `pills.json[key][anchorKey]` > `pinned` > auto-placement. Only the amplifier board pins its tags in code.
+- Position precedence: `pills.json[file][anchorKey]` > `pinned` > auto-placement, where `file` is `amp` or `amp-top` and so on. Only the amplifier board pins its tags in code, and only for the isometric view.
 
 ## Hover tooltips and highlight (no script)
 
@@ -59,7 +67,7 @@ Hovering or keyboard-focusing a tag shows its tooltip and highlights its part, u
 - `render()` wraps each part in `<g class="part" data-part=…>` and the overlay in `<g class="overlay">`. Each tag is a focusable `<g class="pill" data-for=…>`; tags whose anchor is a part also get the class `linked`. Tooltips are `<g class="tip" visibility="hidden">` drawn last, so they sit above everything.
 - CSS can't match one attribute value against another, so each SVG carries its own `<style>` with per-tag `#bb-<key>:has(.pill[data-for=…]:is(:hover, :focus-visible))` rules. These show the tooltip and un-dim and glow the part (`--part-glow`).
 - The shared dimming, focus and tooltip styles live in `page-head.html`.
-- Tooltip side (below, above, right, left) is chosen at build time to avoid covering the anchor's surroundings and the leader.
+- Tooltip side (below, above, right, left) is chosen at build time. It avoids the part's footprint, the area round the anchor and the leader, and never covers its own tag.
 - Node tags (`Uin`, `Uut`, …) anchor to `b.P(...)` points, not parts, so they get a tooltip but no highlight.
 
 ## Gotchas

@@ -4,12 +4,16 @@ export const ROW = { a: 4, b: 5, c: 6, d: 7, e: 8, f: 10, g: 11, h: 12, i: 13, j
 const f = (n) => Math.round(n * 10) / 10;
 const pt = (p) => `${p[0]},${p[1]}`;
 
-export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
+export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 17, X0 = view === "top" ? (680 - (cols + 1) * S) / 2 : 330, Y0 = 150 } = {}) {
+  const flat = view === "top";
   const K = Math.cos(Math.PI / 6) * S;
   const W = cols + 1;
-  const T = 9;
-  const P = (u, v, h = 0) => [f(X0 + (u - v) * K), f(Y0 + (u + v) * 0.5 * S - h)];
-  const base = [];
+  const T = flat ? 0 : 9;
+  // Top-down ignores h: parts lie flat, so anything placed "above" the board lands on its footprint.
+  const P = flat
+    ? (u, v) => [f(X0 + u * S), f(Y0 + v * S)]
+    : (u, v, h = 0) => [f(X0 + (u - v) * K), f(Y0 + (u + v) * 0.5 * S - h)];
+  const height = flat ? Math.ceil(Y0 + 19.15 * S + 18) : undefined;
   const overlay = [];
   const draws = [];
   // Keyed by the anchor array a part returns, so `b.anchors.R1 = b.resistor(...)` alone links tag R1 to that drawing.
@@ -24,6 +28,14 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   const tints = [];
   const anchors = {};
   const obs = [];
+  // The obstacle points a part adds become its footprint, which tooltips try not to cover.
+  const footprint = new WeakMap();
+  const def = (fn) => (...args) => {
+    const start = obs.length;
+    const anchor = fn(...args);
+    footprint.set(anchor, obs.slice(start));
+    return anchor;
+  };
   const ob = (p) => obs.push(p);
   const obSeg = (a, b, n = 8) => {
     for (let i = 0; i <= n; i++) {
@@ -90,9 +102,27 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   const inductor = (c1, v1, c2, v2) =>
     axial(c1, v1, c2, v2, { body: "#3B6D11", bands: ["#97C459", "#97C459", "#97C459", "#97C459", "#97C459"], width: 9 });
 
+  const circle = (c, r, fill, stroke, sw = 1.3) => `<circle cx="${c[0]}" cy="${c[1]}" r="${f(r)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+  const onCircle = (c, r, ang) => [f(c[0] + r * Math.cos(ang)), f(c[1] + r * Math.sin(ang))];
+
   const ecap = (cp, vp, cn, vn, at) => {
     const uc = at ? at[0] : (cp + cn) / 2;
     const vc = at ? at[1] : (vp + vn) / 2;
+    if (flat) {
+      const c = P(uc, vc);
+      const r = 0.36 * S;
+      let s = lead(hole(cp, vp), c) + lead(hole(cn, vn), c);
+      obRect(c[0] - r, c[1] - r, 2 * r, 2 * r);
+      obSeg(P(cp, vp), c);
+      obSeg(P(cn, vn), c);
+      s += circle(c, r, "#185FA5", "#042C53");
+      // Light stripe marks the − side, turned toward the − lead.
+      const ang = Math.atan2(P(cn, vn)[1] - c[1], P(cn, vn)[0] - c[0]);
+      s += `<path d="M${pt(onCircle(c, r - 0.6, ang - 0.8))} A${f(r - 0.6)},${f(r - 0.6)} 0 0 1 ${pt(onCircle(c, r - 0.6, ang + 0.8))} Z" fill="#B5D4F4"/>`;
+      s += line(onCircle(c, r * 0.45, Math.PI / 4), onCircle(c, r * 0.45, (5 * Math.PI) / 4), "#0C447C", 1);
+      s += line(onCircle(c, r * 0.45, (3 * Math.PI) / 4), onCircle(c, r * 0.45, (7 * Math.PI) / 4), "#0C447C", 1);
+      return part(depth(uc, vc) + 0.3, s, [c[0], f(c[1] - r - 2)]);
+    }
     const b = P(uc, vc, 6);
     const r = 6.5;
     const H = 24;
@@ -110,6 +140,18 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   const film = (c1, v1, c2, v2) => {
     const uc = (c1 + c2) / 2;
     const vc = (v1 + v2) / 2;
+    if (flat) {
+      const c = P(uc, vc);
+      const w = 0.4 * S;
+      const h = 0.2 * S;
+      let s = lead(hole(c1, v1), c) + lead(hole(c2, v2), c);
+      obRect(c[0] - w, c[1] - h, 2 * w, 2 * h);
+      obSeg(P(c1, v1), c);
+      obSeg(P(c2, v2), c);
+      s += `<rect x="${f(c[0] - w)}" y="${f(c[1] - h)}" width="${f(2 * w)}" height="${f(2 * h)}" rx="2" fill="#E8C547" stroke="#633806" stroke-width="1.3"/>`;
+      s += `<rect x="${f(c[0] - w + 2)}" y="${f(c[1] - h + 1.5)}" width="${f(2 * w - 4)}" height="2" rx="1" fill="#F7E3A1"/>`;
+      return part(depth(uc, vc) + 0.3, s, [c[0], f(c[1] - h - 2)]);
+    }
     const b = P(uc, vc, 7);
     const w = 7;
     const H = 14;
@@ -125,6 +167,21 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   const led = (ca, va, cc, vc2) => {
     const uc = (ca + cc) / 2;
     const vc = (va + vc2) / 2;
+    if (flat) {
+      const c = P(uc, vc);
+      const r = 0.3 * S;
+      let s = lead(hole(ca, va), c) + lead(hole(cc, vc2), c);
+      obRect(c[0] - r, c[1] - r, 2 * r, 2 * r);
+      obSeg(P(ca, va), c);
+      obSeg(P(cc, vc2), c);
+      // Rim with a flat edge on the cathode side, as on the real part.
+      const ang = Math.atan2(P(cc, vc2)[1] - c[1], P(cc, vc2)[0] - c[0]);
+      const R = r + 1.8;
+      s += `<path d="M${pt(onCircle(c, R, ang + 0.75))} A${f(R)},${f(R)} 0 1 1 ${pt(onCircle(c, R, ang - 0.75))} Z" fill="#A32D2D"/>`;
+      s += circle(c, r, "#E24B4A", "#791F1F");
+      s += circle(onCircle(c, r * 0.4, -2.2), r * 0.3, "#F7C1C1", "none", 0);
+      return part(depth(uc, vc) + 0.3, s, [c[0], f(c[1] - R - 2)]);
+    }
     const b = P(uc, vc, 10);
     const r = 5.5;
     let s = lead(hole(ca, va), [f(b[0] - 2.5), b[1]]) + lead(hole(cc, vc2), [f(b[0] + 2.5), b[1]]);
@@ -138,6 +195,21 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   };
 
   const pot = (c, v) => {
+    if (flat) {
+      // Body sits just below the pins so the pin holes stay visible.
+      const lo = P(c - 1.15, v + 0.3);
+      const hi = P(c + 1.15, v + 1.3);
+      let s = "";
+      for (const dc of [-1, 0, 1]) {
+        s += lead(hole(c + dc, v), P(c + dc, v + 0.3));
+      }
+      obRect(lo[0], lo[1], hi[0] - lo[0], hi[1] - lo[1]);
+      s += `<rect x="${lo[0]}" y="${lo[1]}" width="${f(hi[0] - lo[0])}" height="${f(hi[1] - lo[1])}" rx="2" fill="#185FA5" stroke="#042C53" stroke-width="1.3"/>`;
+      const cen = P(c, v + 0.8);
+      s += circle(cen, 0.32 * S, "#F1EFE8", "#2C2C2A");
+      s += line(onCircle(cen, 0.22 * S, -0.6), onCircle(cen, 0.22 * S, Math.PI - 0.6), "#5F5E5A", 1.6);
+      return part(depth(c, v) + 0.4, s, [cen[0], f(hi[1] + 2)]);
+    }
     let s = "";
     for (const dc of [-1, 0, 1]) {
       s += lead(hole(c + dc, v), P(c + dc * 0.8, v, 6));
@@ -155,6 +227,32 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   };
 
   const transistor = (c, v, { can = false } = {}) => {
+    if (flat) {
+      let s = "";
+      if (can) {
+        const cen = P(c, v - 0.35);
+        const r = 0.62 * S;
+        for (const dc of [-1, 0, 1]) {
+          s += lead(hole(c + dc, v), onCircle(cen, r * 0.35, Math.PI / 2 - dc * 0.9));
+        }
+        obRect(cen[0] - r - 6, cen[1] - r, 2 * r + 6, 2 * r);
+        s += `<path d="M${pt(onCircle(cen, r - 1, 2.15))} l-6,3 l2,4 l6,-3 Z" fill="#B4B2A9" stroke="#2C2C2A" stroke-width="1.3"/>`;
+        s += circle(cen, r, "#B4B2A9", "#2C2C2A");
+        s += circle(cen, r * 0.72, "#D3D1C7", "#888780", 0.8);
+        return part(depth(c, v) + 0.4, s, [cen[0], f(cen[1] - r - 2)]);
+      }
+      // TO-92 seen from above: flat face toward the pins' row, rounded back away from it.
+      const l = P(c - 1.1, v + 0.2);
+      const r = P(c + 1.1, v + 0.2);
+      const apex = P(c, v - 0.6);
+      for (const dc of [-1, 0, 1]) {
+        hole(c + dc, v);
+      }
+      obRect(l[0], apex[1], r[0] - l[0], l[1] - apex[1]);
+      s += `<path d="M${pt(l)} L${pt(r)} A${f(r[0] - apex[0])},${f(l[1] - apex[1])} 0 0 0 ${pt(l)} Z" fill="#2C2C2A" stroke="#1A1A18" stroke-width="1.3"/>`;
+      s += line([f(l[0] + 3), f(l[1] - 2.5)], [f(r[0] - 3), f(r[1] - 2.5)], "#5F5E5A", 1.2);
+      return part(depth(c, v) + 0.4, s, [apex[0], f(apex[1] - 2)]);
+    }
     let s = "";
     for (const dc of [-1, 0, 1]) {
       s += lead(hole(c + dc, v), P(c + dc * 0.7, v, 9));
@@ -229,16 +327,19 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
 
   const probe = (from, c, v, color, clipAt) => {
     const h = hole(c, v);
-    const top = [h[0], f(h[1] - 34)];
+    // From above, a standing probe body would lie across the holes above its tip, so the flat view keeps it short.
+    const rise = flat ? 16 : 34;
+    const body = flat ? 8 : 22;
+    const top = [h[0], f(h[1] - rise)];
     overlay.push(`<path d="M${pt(from)} C${from[0]},${f(top[1] - 40)} ${top[0]},${f(top[1] - 50)} ${pt(top)}" fill="none" stroke="${color}" stroke-width="1.8"/>`);
     cubic(from, [from[0], top[1] - 40], [top[0], top[1] - 50], top);
     obSeg(top, h, 6);
-    overlay.push(`<rect x="${f(top[0] - 2.5)}" y="${top[1]}" width="5" height="22" rx="2" fill="${color}" stroke="#2C2C2A" stroke-width="0.6"/>`);
-    overlay.push(line([top[0], f(top[1] + 22)], h, "#2C2C2A", 3.2) + line([top[0], f(top[1] + 22)], h, color, 1.8));
+    overlay.push(`<rect x="${f(top[0] - 2.5)}" y="${top[1]}" width="5" height="${body}" rx="2" fill="${color}" stroke="#2C2C2A" stroke-width="0.6"/>`);
+    overlay.push(line([top[0], f(top[1] + body)], h, "#2C2C2A", 3.2) + line([top[0], f(top[1] + body)], h, color, 1.8));
     tip(h, color);
     if (clipAt) {
       const g = hole(clipAt[0], clipAt[1]);
-      const gs = [f(top[0] + 2.5), f(top[1] + 8)];
+      const gs = [f(top[0] + 2.5), f(top[1] + Math.min(8, body / 2))];
       gndPath(`M${pt(gs)} Q${f((gs[0] + g[0]) / 2 + 12)},${f(Math.min(gs[1], g[1]) - 16)} ${pt(g)}`);
       quad(gs, [(gs[0] + g[0]) / 2 + 12, Math.min(gs[1], g[1]) - 16], g, 8);
       clip(g);
@@ -257,12 +358,17 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     const sides = [
       [clampX(x - w / 2), y + 10 + gap, [x - pw / 2, y + 10, pw, gap]],
       [clampX(x - w / 2), y - 10 - gap - h, [x - pw / 2, y - 10 - gap, pw, gap]],
-      [x + pw / 2 + gap, clampY(y - h / 2), [x + pw / 2, y - 10, gap, 20]],
-      [x - pw / 2 - gap - w, clampY(y - h / 2), [x - pw / 2 - gap, y - 10, gap, 20]],
+      [clampX(x + pw / 2 + gap), clampY(y - h / 2), [x + pw / 2, y - 10, gap, 20]],
+      [clampX(x - pw / 2 - gap - w), clampY(y - h / 2), [x - pw / 2 - gap, y - 10, gap, 20]],
     ];
-    // Pick the side that covers least of the part around the anchor and of the leader to it.
+    // Pick the side that covers least of the part (its footprint, else the area round the anchor) and of the leader to it.
+    const feet = (anchor && footprint.get(anchor)) || [];
     const score = ([l, t]) => {
       if (l < 4 || t < 4 || l + w > 676 || t + h > VH - 4) {
+        return Infinity;
+      }
+      // Clamping into bounds can slide a side tip back over its own tag.
+      if (l < x + pw / 2 && l + w > x - pw / 2 && t < y + 10 && t + h > y - 10) {
         return Infinity;
       }
       if (!anchor) {
@@ -272,6 +378,11 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
       const ix = Math.max(0, Math.min(r[2], anchor[0] + 30) - Math.max(r[0], anchor[0] - 30));
       const iy = Math.max(0, Math.min(r[3], anchor[1] + 26) - Math.max(r[1], anchor[1] - 26));
       let sc = ix * iy;
+      for (const p of feet) {
+        if (p[0] > r[0] && p[0] < r[2] && p[1] > r[1] && p[1] < r[3]) {
+          sc += 60;
+        }
+      }
       for (let i = 1; i < 12; i++) {
         const px = x + (anchor[0] - x) * i / 12;
         const py = y + (anchor[1] - y) * i / 12;
@@ -362,8 +473,10 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   const render = (VH, title, desc, id) => {
     const out = [];
     const add = (s) => out.push(s);
-    add(poly([P(0, 18), P(W, 18), [P(W, 18)[0], P(W, 18)[1] + T], [P(0, 18)[0], P(0, 18)[1] + T]], "#D3D1C7", "#B4B2A9"));
-    add(poly([P(W, 0), P(W, 18), [P(W, 18)[0], P(W, 18)[1] + T], [P(W, 0)[0], P(W, 0)[1] + T]], "#C4C2B8", "#B4B2A9"));
+    if (!flat) {
+      add(poly([P(0, 18), P(W, 18), [P(W, 18)[0], P(W, 18)[1] + T], [P(0, 18)[0], P(0, 18)[1] + T]], "#D3D1C7", "#B4B2A9"));
+      add(poly([P(W, 0), P(W, 18), [P(W, 18)[0], P(W, 18)[1] + T], [P(W, 0)[0], P(W, 0)[1] + T]], "#C4C2B8", "#B4B2A9"));
+    }
     add(poly([P(0, 0), P(W, 0), P(W, 18), P(0, 18)], "#F6F4EE", "#B4B2A9"));
     add(poly([P(0.4, 8.75), P(W - 0.4, 8.75), P(W - 0.4, 9.25), P(0.4, 9.25)], "#DEDBD2"));
     for (const [c, v1, v2, fill] of tints) {
@@ -379,7 +492,9 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
           continue;
         }
         const p = P(c, v);
-        add(`<ellipse cx="${p[0]}" cy="${p[1]}" rx="2.4" ry="1.4" fill="#888780"/>`);
+        add(flat
+          ? `<rect x="${f(p[0] - 1.8)}" y="${f(p[1] - 1.8)}" width="3.6" height="3.6" rx="0.6" fill="#888780"/>`
+          : `<ellipse cx="${p[0]}" cy="${p[1]}" rx="2.4" ry="1.4" fill="#888780"/>`);
       }
     }
     const lbl = (p, t, size, fill, weight = 500) => {
@@ -400,9 +515,15 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
       lbl(P(0.25, v), t, 15, col, 600);
       lbl(P(W - 0.25, v), t, 15, col, 600);
     }
-    for (const [c, v] of used.values()) {
+    const rings = [...used.values()].map(([c, v]) => {
       const p = P(c, v);
-      add(`<ellipse cx="${p[0]}" cy="${p[1]}" rx="5.2" ry="3.2" fill="#FFFFFF" stroke="#D85A30" stroke-width="1.8"/><ellipse cx="${p[0]}" cy="${p[1]}" rx="2.2" ry="1.3" fill="#2C2C2A"/>`);
+      return flat
+        ? `<circle cx="${p[0]}" cy="${p[1]}" r="4.6" fill="#FFFFFF" stroke="#D85A30" stroke-width="1.6"/><rect x="${f(p[0] - 1.6)}" y="${f(p[1] - 1.6)}" width="3.2" height="3.2" rx="0.5" fill="#2C2C2A"/>`
+        : `<ellipse cx="${p[0]}" cy="${p[1]}" rx="5.2" ry="3.2" fill="#FFFFFF" stroke="#D85A30" stroke-width="1.8"/><ellipse cx="${p[0]}" cy="${p[1]}" rx="2.2" ry="1.3" fill="#2C2C2A"/>`;
+    });
+    // From above, part bodies cover their own pins, so the in-use rings go on top of the parts instead of under them.
+    if (!flat) {
+      out.push(...rings);
     }
     for (const [key, a] of Object.entries(anchors)) {
       const item = partOf.get(a);
@@ -413,6 +534,9 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     draws.sort((a, b) => a.d - b.d);
     for (const d of draws) {
       add(d.key ? `<g class="part" data-part="${d.key}">${d.s}</g>` : `<g class="part">${d.s}</g>`);
+    }
+    if (flat) {
+      out.push(...rings);
     }
     add(`<g class="overlay">${overlay.join("")}</g>`);
     placeAll(VH);
@@ -444,5 +568,8 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     return `<svg id="${id}" width="100%" viewBox="0 0 680 ${VH}" role="group" xmlns="http://www.w3.org/2000/svg"><title>${title}</title><desc>${desc}</desc>${style}${out.join("")}</svg>`;
   };
 
-  return { P, hole, tint, resistor, inductor, ecap, film, led, pot, transistor, jumper, box, wire, probe, pill, anchors, render, ROW };
+  return {
+    view, height, P, hole, tint,
+    resistor: def(resistor), inductor: def(inductor), ecap: def(ecap), film: def(film), led: def(led), pot: def(pot), transistor: def(transistor), jumper: def(jumper),
+    box, wire, probe, pill, anchors, render, ROW };
 }

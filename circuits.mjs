@@ -10,8 +10,11 @@ const pillsFile = "pills.json";
 const placed = existsSync(pillsFile) ? JSON.parse(readFileSync(pillsFile, "utf8")) : {};
 mkdirSync(OUT, { recursive: true });
 
+// Pinned positions are hand-tuned for the isometric layout, so the top-down view always auto-places.
 const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
-  const spec = { ...pinned, ...placed[key] };
+  const flat = b.view === "top";
+  const file = flat ? `${key}-top` : key;
+  const spec = { ...(flat ? {} : pinned), ...placed[file] };
   const report = {};
   for (const [name, anchorKey, cls] of names) {
     const a = b.anchors[anchorKey];
@@ -19,14 +22,14 @@ const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
     const pos = spec[anchorKey] || [null, null];
     b.pill(name, pos[0], pos[1], cls || "c-purple", anchorKey, info[anchorKey]);
   }
-  writeFileSync(`${OUT}/${key}.svg`, b.render(VH, title, desc, `bb-${key}`));
-  console.log(key, JSON.stringify(report));
+  writeFileSync(`${OUT}/${file}.svg`, b.render(b.height ?? VH, title, desc, `bb-${file}`));
+  console.log(file, JSON.stringify(report));
 };
 
 const IN_NODE = ["Input node", "CH1 probe, generator signal"];
 
-{
-  const b = makeBoard({ cols: 12, S: 20, X0: 360, Y0: 150 });
+const ledBoard = (view) => {
+  const b = makeBoard(view === "top" ? { cols: 12, view, S: 30 } : { cols: 12, S: 20, X0: 360, Y0: 150 });
   b.box(30, 40, 160, 52, "V1 bench supply", ["+12 V / 0 V"]);
   b.wire([190, 58], 2, R.tp, RED);
   b.wire([190, 74], 2, R.tn, BLACK, { casing: true });
@@ -48,10 +51,10 @@ const IN_NODE = ["Input node", "CH1 probe, generator signal"];
     title: "LED indicator on a breadboard",
     desc: "LED D1 from the +12 V rail into column 5, resistor R from column 5 to the ground rail, multimeter across R.",
   });
-}
+};
 
-const filter = (key, kind) => {
-  const b = makeBoard({ cols: 12, S: 21, X0: 377, Y0: 150 });
+const filter = (key, kind, view) => {
+  const b = makeBoard(view === "top" ? { cols: 12, view, S: 30 } : { cols: 12, S: 21, X0: 377, Y0: 150 });
   b.box(30, 40, 170, 52, "Signal generator", [kind === "rl" ? "Square wave, Uin" : "Square wave, 5 V"]);
   b.wire([200, 58], 3, R.e, AMBER);
   b.wire([200, 78], 2, R.tn, BLACK, { dashed: true });
@@ -92,11 +95,9 @@ const filter = (key, kind) => {
     desc: kind === "rl" ? "Inductor L1 from the Uin strip to the Uut strip, R1 from Uut to ground, generator and two scope probes." : "Resistor R from the Uin strip to the Uut strip, capacitor C from Uut to ground, generator and two scope probes.",
   });
 };
-filter("rl", "rl");
-filter("rc", "rc");
-
-{
-  const b = makeBoard();
+const ampBoard = (view) => {
+  // Top-down: start the board right of the signal generator box.
+  const b = makeBoard(view === "top" ? { view, X0: 190 } : {});
   b.box(40, 40, 150, 52, "V1 bench supply", ["+12 V / 0 V"]);
   b.wire([190, 58], 2, R.tp, RED);
   b.wire([190, 74], 2, R.tn, BLACK, { casing: true });
@@ -143,12 +144,12 @@ filter("rc", "rc");
     },
     VH: 510,
     title: "Common emitter amplifier on a breadboard",
-    desc: "Isometric breadboard with components R1, R2, R3, R4, C1, C2, C3 and Q3, plus supply, signal generator and scope probe connections.",
+    desc: "Breadboard with components R1, R2, R3, R4, C1, C2, C3 and Q3, plus supply, signal generator and scope probe connections.",
   });
-}
+};
 
-const astable = (key, variable) => {
-  const b = makeBoard({ cols: 21, S: 17, X0: 310, Y0: 165 });
+const astable = (key, variable, view) => {
+  const b = makeBoard(view === "top" ? { cols: 21, view } : { cols: 21, S: 17, X0: 310, Y0: 165 });
   b.box(20, 40, 160, 52, "V1 bench supply", ["+9 V / 0 V (example)"]);
   b.wire([180, 58], 2, R.tp, RED);
   b.wire([100, 92], 1, R.bn, BLACK, { casing: true });
@@ -211,5 +212,12 @@ const astable = (key, variable) => {
     desc: variable ? "Two transistors UT1 and UT2 with cross-coupled capacitors, LEDs in the collector lines, RP1 setting the base resistances, scope probes on both collectors." : "Two transistors Q1 and Q2 with cross-coupled capacitors C, collector resistors R1, base resistors R2, scope probes on both collectors.",
   });
 };
-astable("ast4", false);
-astable("ast5", true);
+
+for (const view of ["iso", "top"]) {
+  ledBoard(view);
+  filter("rl", "rl", view);
+  filter("rc", "rc", view);
+  ampBoard(view);
+  astable("ast4", false, view);
+  astable("ast5", true, view);
+}

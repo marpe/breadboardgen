@@ -49,7 +49,7 @@ def section(sid, eyebrow, title, lede, sch, bb, rows, card_items, sch_cap, bb_ca
     return f"""<section class="circuit" id="{sid}">
 <header><div class="eyebrow">{eyebrow}</div><h2>{title}</h2><p>{lede}</p></header>
 <figure><figcaption><b>SCHEMATIC</b> {sch_cap}</figcaption><div class="drawing">{read(sch)}</div></figure>
-<figure><figcaption><b>BREADBOARD</b> {bb_cap}</figcaption><div class="drawing">{read(f"{OUT}/{bb}")}</div></figure>
+<figure><figcaption><b>BREADBOARD</b> {bb_cap}</figcaption><div class="drawing view-iso">{read(f"{OUT}/{bb}.svg")}</div><div class="drawing view-top">{read(f"{OUT}/{bb}-top.svg")}</div></figure>
 {table(rows)}
 {cards(card_items)}
 </section>
@@ -61,7 +61,7 @@ S = []
 S.append(section(
     "led", "Prep task · page 2", "LED voltage indicator",
     "A LED shows that the 12 V supply is on. R limits the current so the LED gets its 2.5 V and 20 mA.",
-    "schematics/sch_led.svg", "led.svg",
+    "schematics/sch_led.svg", "led",
     [
         (node("Uin +12 V"), "Top + rail", "Supply red lead at col 2; LED anode (long leg) at col 5"),
         (node("LED–R"), "Col 5, rows a–e", f"LED cathode {c('5a')}, R {c('5c')}, multimeter red probe {c('5e')}"),
@@ -86,7 +86,7 @@ S.append(section(
 S.append(section(
     "rl", "Figure 1 · page 3", "RL circuit",
     "The inductor resists fast changes in current, so a square wave at Uin comes out with rounded edges across R1. The rounding gets worse as the frequency rises.",
-    "schematics/sch_rl.svg", "rl.svg",
+    "schematics/sch_rl.svg", "rl",
     [
         (node("Uin", "in"), "Col 3, rows a–e", f"CH1 probe tip {c('3a')}, L1 {c('3c')}, generator signal {c('3e')}"),
         (node("Uut", "out"), "Col 8, rows a–e", f"CH2 probe tip {c('8a')}, R1 {c('8b')}, L1 {c('8c')}"),
@@ -110,7 +110,7 @@ S.append(section(
 S.append(section(
     "rc", "Figure 3 · page 4", "RC charging circuit",
     "The capacitor charges and discharges through R each time the square wave flips. CH2 shows the charge curve.",
-    "schematics/sch_rc.svg", "rc.svg",
+    "schematics/sch_rc.svg", "rc",
     [
         (node("Uin", "in"), "Col 3, rows a–e", f"CH1 probe tip {c('3a')}, R {c('3c')}, generator signal {c('3e')}"),
         (node("Uut", "out"), "Col 8, rows a–e", f"CH2 probe tip {c('8a')}, C {c('8b')}, R {c('8c')}"),
@@ -145,7 +145,7 @@ amp_rows = [
 S.append(section(
     "amp", "Figure 2 · page 5", "Common emitter amplifier",
     "One BC108B gives a large, inverted copy of a small input signal.",
-    "schematics/sch.svg", "amp.svg", amp_rows,
+    "schematics/sch.svg", "amp", amp_rows,
     [
         ("Expected DC levels", "dl", [
             ("V<sub>B</sub>", "≈ 3.6 V (12 V × 12k / 39k)"),
@@ -171,7 +171,7 @@ S.append(section(
 S.append(section(
     "ast4", "Figure 4 · page 6", "Astable multivibrator",
     "Two transistors take turns switching each other on and off through the capacitors, so each collector makes a square wave. Values here are examples, since the PDF doesn't give any.",
-    f"{OUT}/sch_ast4.svg", "ast4.svg",
+    f"{OUT}/sch_ast4.svg", "ast4",
     [
         (node("+9 V"), "Top + rail", "Supply red lead col 2; R1 at cols 7 and 14; R2 at cols 4 and 17"),
         (node("GND"), "Bottom − rail, top − rail via col 21 bridge", "Supply black lead col 1 (bottom); emitter jumpers from cols 5 and 16; CH1 clip col 8 and CH2 clip col 13 (top)"),
@@ -206,7 +206,7 @@ S.append(section(
 S.append(section(
     "ast5", "Figure 5 · page 6", "Variable astable multivibrator",
     "The Sagitta kit version: LEDs in the collector lines show the switching, and RP1 shifts resistance between the two base resistors so you can change the blink times. Values are examples.",
-    f"{OUT}/sch_ast5.svg", "ast5.svg",
+    f"{OUT}/sch_ast5.svg", "ast5",
     [
         (node("+9 V"), "Top + rail, bottom + rail via col 20 bridge", "Supply red lead col 2; LED1 anode col 3; LED2 anode col 18; RP1 wiper jumper from col 10 (bottom)"),
         (node("GND"), "Bottom − rail, top − rail via col 21 bridge", "Supply black lead col 1 (bottom); emitter jumpers from cols 5 and 16; CH1 clip col 8 and CH2 clip col 13 (top)"),
@@ -250,6 +250,11 @@ body = f"""<main>
 <p class="lede">Every circuit from the lab PM, drawn as a schematic and as a breadboard layout with the same part names. Each one shows where the supply, generator and scope probes connect.</p>
 {nav}
 </header>
+<fieldset class="view-toggle">
+<legend>Breadboard view</legend>
+<label><input type="radio" name="bb-view" value="iso" checked>Isometric</label>
+<label><input type="radio" name="bb-view" value="top">Top-down</label>
+</fieldset>
 {legend}
 {''.join(S)}
 </main>
