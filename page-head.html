@@ -1,6 +1,5 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Labb 5 Breadboard Guide</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Archivo+Narrow:wght@500;600&display=swap">
@@ -47,7 +46,11 @@
   color-scheme: dark;
 }
 body { background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--sans); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 56px; }
-main { max-width: 900px; margin: 0 auto; display: grid; gap: 28px; }
+/* Thin, theme-coloured scrollbars everywhere. scrollbar-color inherits but scrollbar-width doesn't, so it goes on every
+   element. The thumb uses --muted for ≥3:1 contrast. */
+:root { scrollbar-color: var(--muted) transparent; }
+* { scrollbar-width: thin; }
+main { max-width: 900px; margin: 0 auto; display: grid; gap: 28px; min-width: 0; }
 header { display: grid; gap: 8px; }
 .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 h1 { font: 600 clamp(28px, 5vw, 40px)/1.1 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
@@ -57,8 +60,7 @@ p { margin: 0; max-width: 65ch; }
 figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; }
 figcaption { font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 figcaption b { font: 500 12px var(--mono); color: var(--ink); letter-spacing: 0.04em; }
-.drawing { overflow-x: auto; }
-.drawing svg { display: block; min-width: 560px; width: 100%; height: auto; }
+.drawing svg { display: block; width: 100%; height: auto; }
 svg .th { font: 500 14px var(--sans); fill: var(--ink); }
 svg .ts { font: 400 12px var(--sans); fill: var(--muted); }
 svg .bbl { font: 500 11px var(--sans); fill: var(--ink); }
@@ -82,7 +84,7 @@ td code, p code, li code { font: 400 13px var(--mono); background: var(--chip); 
 .node { font: 500 13px var(--mono); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line-strong); white-space: nowrap; }
 .node.in { color: var(--amber-ink); background: var(--amber-fill); border-color: var(--amber-stroke); }
 .node.out { color: var(--teal-ink); background: var(--teal-fill); border-color: var(--teal-stroke); }
-.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; }
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
 .card h3 { font: 500 15px var(--sans); margin: 0; }
 .card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
@@ -91,10 +93,25 @@ dt { font: 400 13px var(--mono); color: var(--muted); }
 dd { margin: 0; font-variant-numeric: tabular-nums; }
 section { display: grid; gap: 12px; }
 svg text { font-family: var(--sans); }
-nav.jump { display: flex; flex-wrap: wrap; gap: 8px; }
-nav.jump a { font: 500 13px var(--sans); color: var(--ink); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; background: var(--paper); }
+/* Circuit nav. scroll-target-group makes its links scroll markers, so :target-current matches the link whose section
+   is in view (Chrome/Edge 140+). page.mjs adds the .\:target-current class as a fallback elsewhere, and keeps
+   aria-current in sync for screen readers. */
+nav.jump { display: flex; flex-wrap: wrap; gap: 8px; scroll-target-group: auto; }
+nav.jump a { font: 500 13px var(--sans); color: var(--ink); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; background: var(--paper); transition: background-color 150ms, border-color 150ms; }
 nav.jump a:hover, nav.jump a:focus-visible { border-color: var(--ink); outline: none; }
 nav.jump a span { font-family: var(--mono); color: var(--muted); margin-right: 6px; }
+nav.jump a:is(:target-current, .\:target-current) { background: var(--ink); border-color: var(--ink); color: var(--paper); font-weight: 600; }
+nav.jump a:is(:target-current, .\:target-current) span { color: inherit; opacity: 0.75; }
+@media (prefers-reduced-motion: reduce) {
+  nav.jump a { transition: none; }
+}
+/* Wide screens: the nav becomes a sticky sidebar left of the content. */
+@media (min-width: 1180px) {
+  main { max-width: 1140px; grid-template-columns: 200px minmax(0, 1fr); column-gap: 40px; }
+  main > * { grid-column: 2; }
+  main > nav.jump { grid-column: 1; grid-row: 1 / span var(--rows); position: sticky; top: max(24px, env(safe-area-inset-top, 0px)); align-self: start; flex-direction: column; flex-wrap: nowrap; }
+  main > nav.jump a { border-radius: 8px; }
+}
 .circuit { display: grid; gap: 18px; padding-top: 28px; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
 .toolbar { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 1; justify-self: start; align-self: start; display: flex; flex-wrap: wrap; gap: 8px; }
 .seg { display: inline-flex; align-items: center; gap: 2px; margin: 0; padding: 4px; border: 1px solid var(--line-strong); border-radius: 999px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); }
@@ -104,10 +121,39 @@ nav.jump a span { font-family: var(--mono); color: var(--muted); margin-right: 6
 .seg label:has(input:checked) { color: var(--paper); background: var(--ink); }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--tag-stroke); outline-offset: 2px; }
 .seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
-.view-top { display: none; }
-main:has(input[name="bb-view"][value="top"]:checked) .view-iso { display: none; }
-main:has(input[name="bb-view"][value="top"]:checked) .view-top { display: block; }
-main:has(#show-tags:not(:checked)) .drawing svg :is(.pill, .tip) { display: none; }
+/* The SVG drawing is the fallback: shown by default, replaced by 3D once the page script confirms WebGL ("has-3d"),
+   and back again for a board whose 3D view failed (".fallback") and whenever the page is printed. */
+.view-3d { display: none; }
+.has-3d figure:not(.fallback) > .view-3d { display: grid; gap: 8px; }
+.has-3d figure:not(.fallback) > .view-iso { display: none; }
+@media print {
+  .has-3d figure > .view-3d { display: none; }
+  .has-3d figure > .view-iso { display: block; }
+  .toolbar, .fs-toggle { display: none; }
+}
+.inst3d { display: grid; justify-items: center; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: color-mix(in srgb, var(--chip) 92%, transparent); color: var(--muted); font: 400 11px/1.35 var(--sans); white-space: nowrap; pointer-events: none; }
+.inst3d b { font: 500 13px var(--sans); color: var(--ink); }
+/* Schematic ↔ breadboard: a part's label in one lights up the part in the other (page.mjs). */
+.drawing svg .sch-ref { cursor: help; }
+.drawing svg .sch-ref.is-hot { fill: var(--tag-stroke); paint-order: stroke; stroke: color-mix(in srgb, var(--tag-stroke) 28%, transparent); stroke-width: 6px; stroke-linejoin: round; }
+.drawing svg .part.xhl { filter: var(--part-glow); }
+.tag3d.is-hot { outline: 2px solid var(--tag-stroke); outline-offset: 1px; }
+.stage { position: relative; container: stage / inline-size; aspect-ratio: 16 / 10; min-height: 320px; width: 100%; border-radius: 8px; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, var(--chip), var(--paper)); touch-action: pan-y; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+/* CSS2DRenderer z-indexes tags by depth; z-index here keeps that sorting inside the layer, below the tooltip. */
+.stage .label-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.tag3d { pointer-events: auto; padding: 1px 8px; border: 1px solid var(--tag-stroke); border-radius: 4px; background: var(--tag-fill); color: var(--tag-ink); font: 500 13px var(--sans); cursor: help; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.tag3d.c-amber { border-color: var(--amber-stroke); background: var(--amber-fill); color: var(--amber-ink); }
+.tag3d.c-teal { border-color: var(--teal-stroke); background: var(--teal-fill); color: var(--teal-ink); }
+.tag3d.c-gray { border-color: var(--line-strong); background: var(--chip); color: var(--ink); }
+.tag3d:is(:hover, :focus-visible) { outline: 2px solid var(--tag-stroke); outline-offset: 1px; }
+.tip3d { position: absolute; z-index: 2; display: grid; gap: 2px; max-width: min(300px, calc(100% - 16px)); padding: 7px 11px; border: 1px solid var(--tip-edge); border-radius: 6px; background: var(--tip-bg); color: var(--tip-ink); font: 400 12px/1.4 var(--sans); pointer-events: none; }
+.tip3d[hidden] { display: none; }
+.tip3d b { font: 500 13px var(--sans); }
+.tip3d .value { opacity: 0.8; }
+.tip3d .sw { display: inline-block; width: 12px; height: 10px; margin-right: 3px; border: 0.75px solid color-mix(in srgb, var(--tip-ink) 55%, transparent); border-radius: 2px; vertical-align: -1px; }
+.tip3d .sw:last-of-type { margin-right: 7px; }
+main:has(#show-tags:not(:checked)) :is(.drawing svg :is(.pill, .tip), .tag3d) { display: none; }
 .circuit header p { color: var(--muted); }
 .note { font-size: 14px; color: var(--muted); }
 .swatch-tag { display: inline-block; width: 22px; height: 12px; border-radius: 3px; border: 1px solid; }
@@ -125,5 +171,65 @@ main:has(#show-tags:not(:checked)) .drawing svg :is(.pill, .tip) { display: none
 .drawing svg .tip-swatch { stroke: var(--tip-ink); stroke-opacity: 0.55; stroke-width: 0.75; }
 @media (prefers-reduced-motion: reduce) {
   .drawing svg :is(.part, .overlay) { transition: none; }
+}
+
+/* Full screen (page.mjs): the caption button shows on phones and touch screens. An expanded figure (.is-full, via the
+   Fullscreen API or as a fixed overlay where that is missing) gives its drawing or 3D stage the whole screen. */
+.fs-toggle { display: none; margin-left: auto; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--paper); color: var(--ink); font: 500 12px var(--sans); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.fs-toggle svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.fs-toggle:hover { border-color: var(--ink); background: var(--chip); }
+.fs-toggle:focus-visible { outline: 2px solid var(--tag-stroke); outline-offset: 2px; }
+@media (max-width: 560px), (pointer: coarse) {
+  .fs-toggle:not([hidden]) { display: inline-flex; }
+}
+figure.is-full .fs-toggle:not([hidden]) { display: inline-flex; }
+/* Only the drawing or 3D view shows, edge to edge, with the close button floating over it. */
+figure.is-full { position: fixed; inset: 0; z-index: 10; width: auto; height: auto; padding: 0; border: 0; border-radius: 0; background: var(--bg); grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+figure.is-full > figcaption { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); z-index: 2; }
+figure.is-full > figcaption > :not(.fs-toggle) { display: none; }
+figure.is-full > .drawing { min-height: 0; }
+/* Drawings zoom and pan inside their box (page.mjs sets the transform). */
+figure.is-full > .drawing:not(.view-3d) { overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+figure.is-full > .drawing:not(.view-3d) svg { height: 100%; transform-origin: 0 0; }
+figure.is-full > .view-3d { grid-template-rows: minmax(0, 1fr); }
+figure.is-full .stage { aspect-ratio: auto; min-height: 0; height: 100%; border-radius: 0; touch-action: none; }
+figure.is-full .view-3d .note { display: none; }
+:root:has(figure.is-full) { overflow: hidden; }
+
+/* 3D overlays scale with their own stage, not the viewport: smaller tags and instrument labels on a narrow stage. */
+@container stage (inline-size < 520px) {
+  .tag3d { padding: 0 5px; font-size: 11px; }
+  .inst3d { padding: 2px 6px; font-size: 9px; }
+  .inst3d b { font-size: 11px; }
+  .tip3d { padding: 5px 8px; font-size: 11px; }
+  .tip3d b { font-size: 12px; }
+}
+
+/* Small screens, down to 320 px wide: no card chrome around figures, tables and cards (it only costs width), drawings
+   and the 3D view at full column width, tables as stacked rows, a scrolling nav row. */
+@media (max-width: 560px) {
+  body { padding-block: 20px 40px; }
+  main { gap: 20px; }
+  .circuit { gap: 12px; padding-top: 20px; }
+  h2 { font-size: 20px; }
+  :is(figure, .card, .table-wrap) { padding: 0; border: 0; border-radius: 0; background: none; }
+  figure { gap: 8px; }
+  figcaption { font-size: 13px; }
+  .stage { aspect-ratio: 4 / 3; min-height: 0; }
+  .cols { gap: 20px; }
+  .legend { gap: 6px 14px; font-size: 12px; }
+  nav.jump { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; margin-inline: -4px; padding-inline: 4px; }
+  nav.jump a { flex: none; scroll-snap-align: start; }
+  /* Each table row becomes a small stacked block; the column name is shown before each value. */
+  table { min-width: 0; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  table, tbody, tr, td { display: block; }
+  tr { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  tr:last-child { border-bottom: 0; }
+  td { padding: 2px 0; border-bottom: 0; }
+  td[data-label]:not(:first-child)::before { content: attr(data-label); display: block; font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+}
+@media (max-width: 360px) {
+  body { padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
 }
 </style>

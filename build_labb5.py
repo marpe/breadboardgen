@@ -1,4 +1,5 @@
 OUT = "out"
+THREE = "https://cdn.jsdelivr.net/npm/three@0.186.1"
 
 
 def read(path):
@@ -6,7 +7,22 @@ def read(path):
         return fh.read()
 
 
-head = read("page-head.html")
+def view3d(key):
+    # Model JSON sits in a data script; "</" is escaped so the JSON can't close the script element early.
+    model = read(f"{OUT}/{key}.3d.json").replace("</", "<\\/")
+    return (f'<div class="drawing view-3d"><div class="stage" data-model="model-{key}"></div>'
+            f'<p class="note">Drag to orbit, right-drag to pan, scroll to zoom. On touch screens, swipe sideways to orbit, or use two fingers to tilt and zoom.</p>'
+            f'<script type="application/json" id="model-{key}">{model}</script></div>')
+
+
+def caption(label, text):
+    # The full-screen button only works with the page script, which unhides it.
+    button = ('<button type="button" class="fs-toggle" hidden><svg viewBox="0 0 16 16" aria-hidden="true">'
+              '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg><span>Full screen</span></button>')
+    return f'<figcaption><b>{label}</b> <span>{text}</span>{button}</figcaption>'
+
+
+head = read("page-head.html") + "<title>Labb 5 Breadboard Guide</title>\n"
 
 legend = """<section class="card" aria-label="How to read the drawings">
 <h3>How to read the drawings</h3>
@@ -29,9 +45,15 @@ def node(label, kind=""):
     return f'<span class="node {kind}">{label}</span>'
 
 
+TABLE_HEADS = ["Node", "Board location", "What plugs in"]
+
+
 def table(rows):
-    body = "".join(f"<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>" for a, b, c in rows)
-    return f'<div class="table-wrap"><table><thead><tr><th>Node</th><th>Board location</th><th>What plugs in</th></tr></thead><tbody>{body}</tbody></table></div>'
+    # data-label repeats the column name on each cell, for the stacked small-screen layout (page-head.html).
+    cells = lambda row: "".join(f'<td data-label="{h}">{v}</td>' for h, v in zip(TABLE_HEADS, row))
+    body = "".join(f"<tr>{cells(row)}</tr>" for row in rows)
+    head = "".join(f"<th>{h}</th>" for h in TABLE_HEADS)
+    return f'<div class="table-wrap"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>'
 
 
 def cards(items):
@@ -48,8 +70,8 @@ def cards(items):
 def section(sid, eyebrow, title, lede, sch, bb, rows, card_items, sch_cap, bb_cap):
     return f"""<section class="circuit" id="{sid}">
 <header><div class="eyebrow">{eyebrow}</div><h2>{title}</h2><p>{lede}</p></header>
-<figure><figcaption><b>SCHEMATIC</b> {sch_cap}</figcaption><div class="drawing">{read(sch)}</div></figure>
-<figure><figcaption><b>BREADBOARD</b> {bb_cap}</figcaption><div class="drawing view-iso">{read(f"{OUT}/{bb}.svg")}</div><div class="drawing view-top">{read(f"{OUT}/{bb}-top.svg")}</div></figure>
+<figure>{caption("SCHEMATIC", sch_cap)}<div class="drawing">{read(sch)}</div></figure>
+<figure>{caption("BREADBOARD", bb_cap)}<div class="drawing view-iso">{read(f"{OUT}/{bb}.svg")}</div>{view3d(bb)}</figure>
 {table(rows)}
 {cards(card_items)}
 </section>
@@ -241,21 +263,18 @@ S.append(section(
 ))
 
 nav_items = [("led", "p.2", "LED indicator"), ("rl", "Fig 1", "RL circuit"), ("rc", "Fig 3", "RC circuit"), ("amp", "Fig 2", "Amplifier"), ("ast4", "Fig 4", "Astable"), ("ast5", "Fig 5", "Variable astable")]
-nav = '<nav class="jump" aria-label="Circuits">' + "".join(f'<a href="#{i}"><span>{n}</span>{t}</a>' for i, n, t in nav_items) + "</nav>"
+# On wide screens the nav is a sticky sidebar spanning every row of main's content column: the header, toolbar,
+# legend and one row per section (see page-head.html).
+nav = f'<nav class="jump" aria-label="Circuits" style="--rows: {3 + len(S)}">' + "".join(f'<a href="#{i}"><span>{n}</span>{t}</a>' for i, n, t in nav_items) + "</nav>"
 
 body = f"""<main>
 <header>
 <div class="eyebrow">TNE108 Labbintroduktion · Labb 5 Analoga kopplingar</div>
 <h1>Labb 5 circuits, schematic to breadboard</h1>
 <p class="lede">Every circuit from the lab PM, drawn as a schematic and as a breadboard layout with the same part names. Each one shows where the supply, generator and scope probes connect.</p>
-{nav}
 </header>
+{nav}
 <div class="toolbar">
-<fieldset class="seg">
-<legend>Breadboard view</legend>
-<label><input type="radio" name="bb-view" value="iso" checked>Isometric</label>
-<label><input type="radio" name="bb-view" value="top">Top-down</label>
-</fieldset>
 <fieldset class="seg">
 <legend>Labels</legend>
 <label><input type="checkbox" id="show-tags" checked>Show</label>
@@ -264,6 +283,13 @@ body = f"""<main>
 {legend}
 {''.join(S)}
 </main>
+<script type="importmap">{{"imports": {{"three": "{THREE}/build/three.module.js", "three/addons/": "{THREE}/examples/jsm/"}}}}</script>
+<script type="text/plain" id="viewer-src">
+{read("viewer3d.mjs")}
+</script>
+<script type="module">
+{read("page.mjs")}
+</script>
 """
 with open(f"{OUT}/labb5.html", "w", encoding="utf-8") as fh:
     fh.write(head + body)

@@ -1,6 +1,6 @@
 # Labb 5 breadboard guide generator
 
-Builds `out/labb5.html`: schematics and isometric breadboard layouts for the TNE108 Labb 5 circuits.
+Builds `out/labb5.html`: schematics and 3D breadboard layouts (with instruments, cables and probes) for the TNE108 Labb 5 circuits.
 
 ## Requirements
 
@@ -25,8 +25,10 @@ All generated files go to `out/` (git-ignored). Set `PYTHON` to override the int
 | `circuits.mjs` | Board layouts for the LED indicator, RL, RC, amplifier and both astable circuits. Writes `led.svg`, `rl.svg`, `rc.svg`, `amp.svg`, `ast4.svg`, `ast5.svg` |
 | `sch_ast.py` | Generates the two astable schematics (`sch_ast4.svg`, `sch_ast5.svg`) |
 | `schematics/` | Hand-written schematics for the amplifier, LED, RL and RC circuits |
-| `build_labb5.py` | Assembles the page from `page-head.html`, `schematics/` and the generated SVGs |
+| `build_labb5.py` | Assembles the page from `page-head.html`, `schematics/`, the generated SVGs and 3D models, `viewer3d.mjs` and `page.mjs` |
 | `page-head.html` | Page title, fonts, colour tokens (light and dark) and styles |
+| `viewer3d.mjs` | Browser-side three.js viewer: builds a 3D breadboard, its instruments and cables from a board's `out/<key>.3d.json` |
+| `page.mjs` | Page script: starts the 3D views (falling back to the SVG drawings) and links schematic labels to breadboard parts |
 | `prev.py` | Renders an SVG to PNG for a quick look: `python3 prev.py out/rl.svg rl.png` |
 
 ## Changing a layout
@@ -39,7 +41,7 @@ b.resistor(3, R.c, 8, R.c);
 
 puts a resistor from hole 3c to hole 8c.
 
-Every board is drawn twice, isometric and top-down (`out/<key>-top.svg`), and a toggle at the top of the page switches all of them at once.
+Breadboards are shown in 3D (three.js from a CDN). The isometric SVG drawing (`out/<key>.svg`) is the fallback: it shows without JavaScript or WebGL, offline, and in print. Hovering a part's label in the schematic highlights it on the breadboard, and the other way round.
 
 Hovering or focusing a tag shows the part's type and value and highlights it on the board. The text comes from each board's `info` map in `circuits.mjs`.
 

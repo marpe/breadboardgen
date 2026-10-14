@@ -11,11 +11,8 @@ const pillsFile = "pills.json";
 const placed = existsSync(pillsFile) ? JSON.parse(readFileSync(pillsFile, "utf8")) : {};
 mkdirSync(OUT, { recursive: true });
 
-// Pinned positions are hand-tuned for the isometric layout, so the top-down view always auto-places.
 const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
-  const flat = b.view === "top";
-  const file = flat ? `${key}-top` : key;
-  const spec = { ...(flat ? {} : pinned), ...placed[file] };
+  const spec = { ...pinned, ...placed[key] };
   const report = {};
   for (const [name, anchorKey, cls] of names) {
     const a = b.anchors[anchorKey];
@@ -23,15 +20,16 @@ const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
     const pos = spec[anchorKey] || [null, null];
     b.pill(name, pos[0], pos[1], cls || "c-purple", anchorKey, info[anchorKey]);
   }
-  writeFileSync(`${OUT}/${file}.svg`, b.render(b.height ?? VH, title, desc, `bb-${file}`));
-  console.log(file, JSON.stringify(report));
+  writeFileSync(`${OUT}/${key}.svg`, b.render(VH, title, desc, `bb-${key}`));
+  writeFileSync(`${OUT}/${key}.3d.json`, JSON.stringify(b.model3d()));
+  console.log(key, JSON.stringify(report));
 };
 
 const IN_NODE = plain("Input node", "CH1 probe, generator signal");
 const LED_MARK = "Long leg is the anode (+)";
 
-const ledBoard = (view) => {
-  const b = makeBoard(view === "top" ? { cols: 12, view, S: 30 } : { cols: 12, S: 20, X0: 360, Y0: 150 });
+const ledBoard = () => {
+  const b = makeBoard({ cols: 12, S: 20, X0: 360, Y0: 150 });
   b.box(30, 40, 160, 52, "V1 bench supply", ["+12 V / 0 V"]);
   b.wire([190, 58], 2, R.tp, RED);
   b.wire([190, 74], 2, R.tn, BLACK, { casing: true });
@@ -41,7 +39,7 @@ const ledBoard = (view) => {
   b.box(490, 40, 170, 70, "Multimeter, V DC", ["Across R", "Expect about 9.5 V"]);
   b.probe([545, 110], 5, R.e, RED);
   b.probe([605, 110], 9, R.tn, BLACK);
-  b.anchors.node = b.P(5, 6.5);
+  b.anchors.node = b.node(5, 6.5);
   finish("led", b, {
     names: [["D1", "D1"], ["R", "R"], ["LED−R node", "node", "c-gray"]],
     info: {
@@ -55,8 +53,8 @@ const ledBoard = (view) => {
   });
 };
 
-const filter = (key, kind, view) => {
-  const b = makeBoard(view === "top" ? { cols: 12, view, S: 30 } : { cols: 12, S: 21, X0: 377, Y0: 150 });
+const filter = (key, kind) => {
+  const b = makeBoard({ cols: 12, S: 21, X0: 377, Y0: 150 });
   b.box(30, 40, 170, 52, "Signal generator", [kind === "rl" ? "Square wave, Uin" : "Square wave, 5 V"]);
   b.wire([200, 58], 3, R.e, AMBER);
   b.wire([200, 78], 2, R.tn, BLACK, { dashed: true });
@@ -86,8 +84,8 @@ const filter = (key, kind, view) => {
   }
   b.probe([530, 110], 3, R.a, AMBER, [4, R.tn]);
   b.probe([590, 110], 8, R.a, TEAL, [9, R.tn]);
-  b.anchors.Uin = b.P(3, 8.3);
-  b.anchors.Uut = b.P(8, 8.3);
+  b.anchors.Uin = b.node(3, 8.3);
+  b.anchors.Uut = b.node(8, 8.3);
   names.push(["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"]);
   finish(key, b, {
     names,
@@ -97,9 +95,8 @@ const filter = (key, kind, view) => {
     desc: kind === "rl" ? "Inductor L1 from the Uin strip to the Uut strip, R1 from Uut to ground, generator and two scope probes." : "Resistor R from the Uin strip to the Uut strip, capacitor C from Uut to ground, generator and two scope probes.",
   });
 };
-const ampBoard = (view) => {
-  // Top-down: start the board right of the signal generator box.
-  const b = makeBoard(view === "top" ? { view, X0: 190 } : {});
+const ampBoard = () => {
+  const b = makeBoard();
   b.box(40, 40, 150, 52, "V1 bench supply", ["+12 V / 0 V"]);
   b.wire([190, 58], 2, R.tp, RED);
   b.wire([190, 74], 2, R.tn, BLACK, { casing: true });
@@ -123,8 +120,8 @@ const ampBoard = (view) => {
   b.anchors.Q3 = b.transistor(11, R.d, { can: true });
   b.probe([530, 110], 8, R.a, AMBER, [9, R.tn]);
   b.probe([575, 110], 16, R.a, TEAL, [15, R.tn]);
-  b.anchors.Uin = b.P(8, 8.3);
-  b.anchors.Uut = b.P(16, 6);
+  b.anchors.Uin = b.node(8, 8.3);
+  b.anchors.Uut = b.node(16, 6);
   finish("amp", b, {
     names: [["R1", "R1"], ["R3", "R3"], ["C1", "C1"], ["C2", "C2"], ["Q3", "Q3"], ["R2", "R2"], ["R4", "R4"], ["C3", "C3"],
       ["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"], ["GND bridge", "bridge", "c-gray"]],
@@ -151,8 +148,8 @@ const ampBoard = (view) => {
   });
 };
 
-const astable = (key, variable, view) => {
-  const b = makeBoard(view === "top" ? { cols: 21, view } : { cols: 21, S: 17, X0: 310, Y0: 165 });
+const astable = (key, variable) => {
+  const b = makeBoard({ cols: 21, S: 17, X0: 310, Y0: 165 });
   b.box(20, 40, 160, 52, "V1 bench supply", ["+9 V / 0 V (example)"]);
   b.wire([180, 58], 2, R.tp, RED);
   b.wire([100, 92], 1, R.bn, BLACK, { casing: true });
@@ -217,11 +214,9 @@ const astable = (key, variable, view) => {
   });
 };
 
-for (const view of ["iso", "top"]) {
-  ledBoard(view);
-  filter("rl", "rl", view);
-  filter("rc", "rc", view);
-  ampBoard(view);
-  astable("ast4", false, view);
-  astable("ast5", true, view);
-}
+ledBoard();
+filter("rl", "rl");
+filter("rc", "rc");
+ampBoard();
+astable("ast4", false);
+astable("ast5", true);
