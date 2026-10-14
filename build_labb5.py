@@ -250,11 +250,17 @@ body = f"""<main>
 <p class="lede">Every circuit from the lab PM, drawn as a schematic and as a breadboard layout with the same part names. Each one shows where the supply, generator and scope probes connect.</p>
 {nav}
 </header>
-<fieldset class="view-toggle">
+<div class="toolbar">
+<fieldset class="seg">
 <legend>Breadboard view</legend>
 <label><input type="radio" name="bb-view" value="iso" checked>Isometric</label>
 <label><input type="radio" name="bb-view" value="top">Top-down</label>
 </fieldset>
+<fieldset class="seg">
+<legend>Labels</legend>
+<label><input type="checkbox" id="show-tags" checked>Show</label>
+</fieldset>
+</div>
 {legend}
 {''.join(S)}
 </main>

@@ -1,5 +1,6 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { makeBoard, ROW as R } from "./lib.mjs";
+import { resistor, filmCap, elcoCap, trimmer, transistor, plain } from "./markings.mjs";
 
 const AMBER = "#BA7517";
 const TEAL = "#1D9E75";
@@ -26,7 +27,8 @@ const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
   console.log(file, JSON.stringify(report));
 };
 
-const IN_NODE = ["Input node", "CH1 probe, generator signal"];
+const IN_NODE = plain("Input node", "CH1 probe, generator signal");
+const LED_MARK = "Long leg is the anode (+)";
 
 const ledBoard = (view) => {
   const b = makeBoard(view === "top" ? { cols: 12, view, S: 30 } : { cols: 12, S: 20, X0: 360, Y0: 150 });
@@ -35,7 +37,7 @@ const ledBoard = (view) => {
   b.wire([190, 74], 2, R.tn, BLACK, { casing: true });
   b.tint(5, 4, 8, "#F7C1C1");
   b.anchors.D1 = b.led(5, R.tp, 5, R.a);
-  b.anchors.R = b.resistor(5, R.c, 8, R.tn);
+  b.anchors.R = b.resistor(5, R.c, 8, R.tn, 470);
   b.box(490, 40, 170, 70, "Multimeter, V DC", ["Across R", "Expect about 9.5 V"]);
   b.probe([545, 110], 5, R.e, RED);
   b.probe([605, 110], 9, R.tn, BLACK);
@@ -43,9 +45,9 @@ const ledBoard = (view) => {
   finish("led", b, {
     names: [["D1", "D1"], ["R", "R"], ["LED−R node", "node", "c-gray"]],
     info: {
-      D1: ["LED", "2.5 V at 20 mA"],
-      R: ["Resistor", "470 Ω, 0.5 W"],
-      node: ["Node", "LED cathode, R and meter probe"],
+      D1: plain("LED", "2.5 V at 20 mA", LED_MARK),
+      R: resistor("Resistor", 470, "0.5 W"),
+      node: plain("Node", "LED cathode, R and meter probe"),
     },
     VH: 500,
     title: "LED indicator on a breadboard",
@@ -65,21 +67,21 @@ const filter = (key, kind, view) => {
   let info;
   if (kind === "rl") {
     b.anchors.L1 = b.inductor(3, R.c, 8, R.c);
-    b.anchors.R1 = b.resistor(8, R.b, 10, R.tn);
+    b.anchors.R1 = b.resistor(8, R.b, 10, R.tn, 1e3);
     names.push(["L1", "L1"], ["R1", "R1"]);
     info = {
-      L1: ["Inductor", "e.g. 10 mH, try several"],
-      R1: ["Resistor", "1 kΩ"],
-      Uut: ["Output node", "CH2 probe, across R1"],
+      L1: plain("Inductor", "e.g. 10 mH, try several"),
+      R1: resistor("Resistor", 1e3),
+      Uut: plain("Output node", "CH2 probe, across R1"),
     };
   } else {
-    b.anchors.R = b.resistor(3, R.c, 8, R.c);
+    b.anchors.R = b.resistor(3, R.c, 8, R.c, 10e3);
     b.anchors.C = b.film(8, R.b, 10, R.tn);
     names.push(["R", "R"], ["C", "C"]);
     info = {
-      R: ["Resistor", "10 kΩ"],
-      C: ["Film capacitor", "0.22 µF"],
-      Uut: ["Output node", "CH2 probe, across C"],
+      R: resistor("Resistor", 10e3),
+      C: filmCap("Film capacitor", 0.22e-6),
+      Uut: plain("Output node", "CH2 probe, across C"),
     };
   }
   b.probe([530, 110], 3, R.a, AMBER, [4, R.tn]);
@@ -110,10 +112,11 @@ const ampBoard = (view) => {
   b.jumper(10, R.e, 7, R.f, "#7F77DD");
   b.jumper(11, R.e, 11, R.f, "#D4537E");
   b.anchors.bridge = b.jumper(19, R.tn, 19, R.bn, BLACK, 26);
-  b.anchors.R1 = b.resistor(11, R.a, 11, R.tp);
-  b.anchors.R3 = b.resistor(12, R.a, 14, R.tp);
-  b.anchors.R2 = b.resistor(11, R.j, 11, R.bn);
-  b.anchors.R4 = b.resistor(7, R.j, 7, R.bn);
+  const ohms = { R1: 27e3, R2: 12e3, R3: 2.2e3, R4: 1.5e3 };
+  b.anchors.R1 = b.resistor(11, R.a, 11, R.tp, ohms.R1);
+  b.anchors.R3 = b.resistor(12, R.a, 14, R.tp, ohms.R3);
+  b.anchors.R2 = b.resistor(11, R.j, 11, R.bn, ohms.R2);
+  b.anchors.R4 = b.resistor(7, R.j, 7, R.bn, ohms.R4);
   b.anchors.C1 = b.film(8, R.b, 11, R.b);
   b.anchors.C2 = b.film(12, R.c, 16, R.c);
   b.anchors.C3 = b.ecap(7, R.h, 9, R.bn);
@@ -126,17 +129,17 @@ const ampBoard = (view) => {
     names: [["R1", "R1"], ["R3", "R3"], ["C1", "C1"], ["C2", "C2"], ["Q3", "Q3"], ["R2", "R2"], ["R4", "R4"], ["C3", "C3"],
       ["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"], ["GND bridge", "bridge", "c-gray"]],
     info: {
-      R1: ["Resistor, upper bias", "27 kΩ"],
-      R2: ["Resistor, lower bias", "12 kΩ"],
-      R3: ["Resistor, collector", "2.2 kΩ"],
-      R4: ["Resistor, emitter", "1.5 kΩ"],
-      C1: ["Film capacitor, input", "1 µF"],
-      C2: ["Film capacitor, output", "1 µF"],
-      C3: ["Electrolytic capacitor", "100 µF, + to emitter"],
-      Q3: ["NPN transistor", "BC108B, TO-18"],
+      R1: resistor("Resistor, upper bias", ohms.R1),
+      R2: resistor("Resistor, lower bias", ohms.R2),
+      R3: resistor("Resistor, collector", ohms.R3),
+      R4: resistor("Resistor, emitter", ohms.R4),
+      C1: filmCap("Film capacitor, input", 1e-6),
+      C2: filmCap("Film capacitor, output", 1e-6),
+      C3: elcoCap("Electrolytic capacitor", 100e-6, "+ to emitter"),
+      Q3: transistor("NPN transistor, TO-18 can", "BC108B", `Printed "BC108B", tab marks E`),
       Uin: IN_NODE,
-      Uut: ["Output node", "CH2 probe, after C2"],
-      bridge: ["Jumper", "Joins top and bottom − rails"],
+      Uut: plain("Output node", "CH2 probe, after C2"),
+      bridge: plain("Jumper", "Joins top and bottom − rails"),
     },
     pinned: {
       R1: [455, 228], R3: [484, 308], C1: [420, 212], C2: [416, 322], Q3: [352, 226], R2: [292, 390], R4: [176, 352], C3: [232, 276],
@@ -162,40 +165,41 @@ const astable = (key, variable, view) => {
   const names = [];
   const Q1 = variable ? "UT1" : "Q1";
   const Q2 = variable ? "UT2" : "Q2";
-  const cap = ["Electrolytic capacitor", "10 µF, + to collector side"];
-  const npn = ["NPN transistor", "BC547B or similar"];
-  const info = { C1: cap, C2: cap, Q1: npn, Q2: npn, bridge: ["Jumper", "Joins top and bottom − rails"] };
+  const cap = elcoCap("Electrolytic capacitor", 10e-6, "+ to collector side");
+  const npn = transistor("NPN transistor, TO-92", "BC547B or similar", `Printed "BC547B" on the flat face`);
+  const info = { C1: cap, C2: cap, Q1: npn, Q2: npn, bridge: plain("Jumper", "Joins top and bottom − rails") };
+  const [rc, rb] = variable ? [470, 10e3] : [1e3, 47e3];
   b.anchors.Q1 = b.transistor(6, R.c);
   b.anchors.Q2 = b.transistor(15, R.c);
   b.anchors.C1 = b.ecap(7, R.b, 15, R.a, [9.6, 4.2]);
   b.anchors.C2 = b.ecap(14, R.b, 6, R.a, [12.4, 4.2]);
   if (!variable) {
-    b.anchors.R1a = b.resistor(7, R.tp, 7, R.a);
-    b.anchors.R1b = b.resistor(14, R.tp, 14, R.a);
-    b.anchors.R2b = b.resistor(6, R.b, 4, R.tp);
-    b.anchors.R2a = b.resistor(15, R.b, 17, R.tp);
+    b.anchors.R1a = b.resistor(7, R.tp, 7, R.a, rc);
+    b.anchors.R1b = b.resistor(14, R.tp, 14, R.a, rc);
+    b.anchors.R2b = b.resistor(6, R.b, 4, R.tp, rb);
+    b.anchors.R2a = b.resistor(15, R.b, 17, R.tp, rb);
     names.push(["R1", "R1a"], ["R1", "R1b"], ["R2", "R2a"], ["R2", "R2b"], ["C", "C1"], ["C", "C2"]);
-    const rc = ["Resistor, collector", "1 kΩ"];
-    const rb = ["Resistor, base", "47 kΩ"];
-    Object.assign(info, { R1a: rc, R1b: rc, R2a: rb, R2b: rb });
+    const collector = resistor("Resistor, collector", rc);
+    const base = resistor("Resistor, base", rb);
+    Object.assign(info, { R1a: collector, R1b: collector, R2a: base, R2b: base });
   } else {
     b.anchors.bridgeP = b.jumper(20, R.tp, 20, R.bp, RED, 30);
     b.anchors.LED1 = b.led(3, R.tp, 3, R.a);
     b.anchors.LED2 = b.led(18, R.tp, 18, R.a);
-    b.anchors.R1a = b.resistor(3, R.b, 7, R.a);
-    b.anchors.R1b = b.resistor(18, R.b, 14, R.a);
+    b.anchors.R1a = b.resistor(3, R.b, 7, R.a, rc);
+    b.anchors.R1b = b.resistor(18, R.b, 14, R.a, rc);
     b.anchors.RP1 = b.pot(10, R.g);
     b.jumper(10, R.j, 10, R.bp, RED, 8);
-    b.anchors.R2a = b.resistor(15, R.e, 11, R.f);
-    b.anchors.R2b = b.resistor(6, R.e, 9, R.f);
+    b.anchors.R2a = b.resistor(15, R.e, 11, R.f, rb);
+    b.anchors.R2b = b.resistor(6, R.e, 9, R.f, rb);
     names.push(["LED1", "LED1"], ["LED2", "LED2"], ["R1", "R1a"], ["R4", "R1b"], ["R2", "R2a"], ["R3", "R2b"], ["RP1", "RP1"], ["C1", "C1"], ["C2", "C2"]);
-    const led = ["LED, collector line", "about 15 mA"];
-    const rc = ["Resistor, LED current", "470 Ω"];
-    const rb = ["Resistor, base", "10 kΩ"];
+    const led = plain("LED, collector line", "about 15 mA", LED_MARK);
+    const ledR = resistor("Resistor, LED current", rc);
+    const base = resistor("Resistor, base", rb);
     Object.assign(info, {
-      LED1: led, LED2: led, R1a: rc, R1b: rc, R2a: rb, R2b: rb,
-      RP1: ["Trimmer potentiometer", "100 kΩ"],
-      bridgeP: ["Jumper", "Joins top and bottom + rails"],
+      LED1: led, LED2: led, R1a: ledR, R1b: ledR, R2a: base, R2b: base,
+      RP1: trimmer("Trimmer potentiometer", 100e3),
+      bridgeP: plain("Jumper", "Joins top and bottom + rails"),
     });
   }
   names.push([Q1, "Q1"], [Q2, "Q2"], ["GND bridge", "bridge", "c-gray"]);

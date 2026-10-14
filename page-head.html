@@ -62,7 +62,6 @@ figcaption b { font: 500 12px var(--mono); color: var(--ink); letter-spacing: 0.
 svg .th { font: 500 14px var(--sans); fill: var(--ink); }
 svg .ts { font: 400 12px var(--sans); fill: var(--muted); }
 svg .bbl { font: 500 11px var(--sans); fill: var(--ink); }
-svg .leader { stroke: var(--muted); stroke-width: 0.6; stroke-dasharray: 3 2; fill: none; }
 svg .c-gray > rect { fill: var(--chip); stroke: var(--line-strong); }
 svg .c-purple > rect { fill: var(--tag-fill); stroke: var(--tag-stroke); }
 svg .c-purple > .th, svg .c-purple > .ts { fill: var(--tag-ink); }
@@ -97,28 +96,33 @@ nav.jump a { font: 500 13px var(--sans); color: var(--ink); text-decoration: non
 nav.jump a:hover, nav.jump a:focus-visible { border-color: var(--ink); outline: none; }
 nav.jump a span { font-family: var(--mono); color: var(--muted); margin-right: 6px; }
 .circuit { display: grid; gap: 18px; padding-top: 28px; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
-.view-toggle { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 1; justify-self: start; align-self: start; display: inline-flex; align-items: center; gap: 2px; margin: 0; padding: 4px; border: 1px solid var(--line-strong); border-radius: 999px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); }
-.view-toggle legend { float: left; padding: 0 8px 0 10px; font: 500 12px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.view-toggle label { position: relative; padding: 5px 14px; border-radius: 999px; font: 500 13px var(--sans); color: var(--muted); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.view-toggle label:hover { color: var(--ink); background: var(--chip); }
-.view-toggle label:has(input:checked) { color: var(--paper); background: var(--ink); }
-.view-toggle label:has(input:focus-visible) { outline: 2px solid var(--tag-stroke); outline-offset: 2px; }
-.view-toggle input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.toolbar { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 1; justify-self: start; align-self: start; display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: inline-flex; align-items: center; gap: 2px; margin: 0; padding: 4px; border: 1px solid var(--line-strong); border-radius: 999px; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(6px); }
+.seg legend { float: left; padding: 0 8px 0 10px; font: 500 12px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.seg label { position: relative; padding: 5px 14px; border-radius: 999px; font: 500 13px var(--sans); color: var(--muted); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.seg label:hover { color: var(--ink); background: var(--chip); }
+.seg label:has(input:checked) { color: var(--paper); background: var(--ink); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--tag-stroke); outline-offset: 2px; }
+.seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
 .view-top { display: none; }
 main:has(input[name="bb-view"][value="top"]:checked) .view-iso { display: none; }
 main:has(input[name="bb-view"][value="top"]:checked) .view-top { display: block; }
+main:has(#show-tags:not(:checked)) .drawing svg :is(.pill, .tip) { display: none; }
 .circuit header p { color: var(--muted); }
 .note { font-size: 14px; color: var(--muted); }
 .swatch-tag { display: inline-block; width: 22px; height: 12px; border-radius: 3px; border: 1px solid; }
-:root { --part-glow: drop-shadow(0 0 1.5px var(--tag-stroke)) drop-shadow(0 0 5px var(--tag-stroke)); }
+/* Tooltip colours stay dark-on-bright in both themes, so they are deliberately not redefined in the dark blocks. */
+:root { --part-glow: drop-shadow(0 0 1.5px var(--tag-stroke)) drop-shadow(0 0 5px var(--tag-stroke)); --tip-bg: #1B1B19; --tip-ink: #F7F7F4; --tip-edge: #5F5E5A; }
 .drawing svg :is(.part, .overlay) { transition: opacity 120ms ease-out; }
 .drawing svg:has(.pill.linked:is(:hover, :focus-visible), .tip.linked:hover) :is(.part, .overlay) { opacity: 0.25; }
 .drawing svg .pill[tabindex] { cursor: help; outline: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .drawing svg .pill[tabindex]:is(:hover, :focus-visible) > rect { stroke-width: 2; }
 .drawing svg .pill[tabindex]:is(:hover, :focus-visible) > .leader { stroke-width: 3; }
-.drawing svg .tip-box { fill: var(--ink); }
-.drawing svg .tip-type { font: 500 13px var(--sans); fill: var(--paper); }
-.drawing svg .tip-value { font: 400 12px var(--sans); fill: var(--paper); opacity: 0.8; }
+.drawing svg .tip-box { fill: var(--tip-bg); stroke: var(--tip-edge); stroke-width: 1; }
+.drawing svg .tip-type { font: 500 13px var(--sans); fill: var(--tip-ink); }
+.drawing svg .tip-value { font: 400 12px var(--sans); fill: var(--tip-ink); opacity: 0.8; }
+.drawing svg .tip-mark { font: 400 12px var(--sans); fill: var(--tip-ink); }
+.drawing svg .tip-swatch { stroke: var(--tip-ink); stroke-opacity: 0.55; stroke-width: 0.75; }
 @media (prefers-reduced-motion: reduce) {
   .drawing svg :is(.part, .overlay) { transition: none; }
 }

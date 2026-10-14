@@ -21,6 +21,7 @@ All generated files go to `out/` (git-ignored). Set `PYTHON` to override the int
 | File | What it does |
 | --- | --- |
 | `lib.mjs` | Breadboard drawing library: isometric board, parts (resistor, inductor, film and electrolytic caps, LED, trimmer pot, TO-92 or TO-18 transistor), jumpers, instrument boxes, probes and ground clips, hole rings, and automatic tag placement |
+| `markings.mjs` | Component markings from values: resistor colour bands, EIA codes for caps and trimmers, value formatting, and the tooltip info helpers |
 | `circuits.mjs` | Board layouts for the LED indicator, RL, RC, amplifier and both astable circuits. Writes `led.svg`, `rl.svg`, `rc.svg`, `amp.svg`, `ast4.svg`, `ast5.svg` |
 | `sch_ast.py` | Generates the two astable schematics (`sch_ast4.svg`, `sch_ast5.svg`) |
 | `schematics/` | Hand-written schematics for the amplifier, LED, RL and RC circuits |

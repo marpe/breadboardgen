@@ -52,13 +52,14 @@ When you add a class or variable to an SVG, define it in `page-head.html` for bo
 - Resistors, inductors, jumpers and wires need no special code; with `h` ignored they draw flat on their own. `ecap`, `film`, `led`, `pot` and `transistor` have an `if (flat)` branch with a top-down body, sized relative to `S`.
 - In the flat view the "in use" rings are drawn above the parts, because bodies cover their own pins from above. The pot body is offset below its pins, and probes are shortened.
 - Instrument boxes are in screen coordinates and shared by both views. The flat board starts at `Y0 = 150`, below the boxes along the top; a board with a box on its left side (the amplifier) passes its own `X0`.
-- The page toggle is CSS-only: a radio group in `build_labb5.py` with `main:has(input[value="top"]:checked)` rules in `page-head.html` that swap `.view-iso` and `.view-top`.
+- The sticky `.toolbar` in `build_labb5.py` holds two CSS-only controls. The view radio group drives `main:has(input[value="top"]:checked)` rules in `page-head.html` that swap `.view-iso` and `.view-top`. The `#show-tags` checkbox hides every `.pill` and `.tip` in the breadboard drawings when unchecked.
 
 ## Tags (pills)
 
 `finish(key, b, { names, info, pinned, VH, title, desc })` in `circuits.mjs`:
 - `names` is a list of `[label, anchorKey, cssClass?]` entries. Labels can repeat (e.g. two `R1` tags on different anchors); anchor keys must be unique.
-- `info[anchorKey]` is `[type, value]` for the hover tooltip, e.g. `["Resistor", "27 kΩ"]`. Take values from the schematics and the cards in `build_labb5.py`; they must agree. A tag without `info` is not focusable and gets no tooltip.
+- `info[anchorKey]` is the hover tooltip, built with the helpers in `markings.mjs`: `resistor(type, ohms, note?)`, `filmCap`, `elcoCap`, `trimmer`, `transistor`, `plain(type, value, mark?)`. They return `{ type, value, bands? | mark? }`. The helpers derive the value text and the marking (4-band colour code, EIA code such as "105") from the number. Take values from the schematics and the cards in `build_labb5.py`; they must agree. A tag without `info` is not focusable and gets no tooltip.
+- Pass the same resistance to the drawn part, e.g. `b.resistor(c1, v1, c2, v2, ohms.R1)`, so the board shows the same bands as the tooltip. Each board keeps its values in one place (e.g. an `ohms` object) for that reason. Without a value, the resistor draws placeholder bands.
 - Position precedence: `pills.json[file][anchorKey]` > `pinned` > auto-placement, where `file` is `amp` or `amp-top` and so on. Only the amplifier board pins its tags in code, and only for the isometric view.
 
 ## Hover tooltips and highlight (no script)
@@ -67,7 +68,7 @@ Hovering or keyboard-focusing a tag shows its tooltip and highlights its part, u
 - `render()` wraps each part in `<g class="part" data-part=…>` and the overlay in `<g class="overlay">`. Each tag is a focusable `<g class="pill" data-for=…>`; tags whose anchor is a part also get the class `linked`. Tooltips are `<g class="tip" visibility="hidden">` drawn last, so they sit above everything.
 - CSS can't match one attribute value against another, so each SVG carries its own `<style>` with per-tag `#bb-<key>:has(.pill[data-for=…]:is(:hover, :focus-visible))` rules. These show the tooltip and un-dim and glow the part (`--part-glow`).
 - The shared dimming, focus and tooltip styles live in `page-head.html`.
-- Tooltip side (below, above, right, left) is chosen at build time. It avoids the part's footprint, the area round the anchor and the leader, and never covers its own tag.
+- Tooltip position is chosen at build time from 8 px slides along the rows above and below the tag and the columns either side. It avoids the part's footprint (or, for node tags, a box round the anchor) and the leader, never covers its own tag, and prefers staying centred. The invisible hover strip is computed from the tag and tip rectangles, so any adjacent position keeps the tip open while the pointer crosses over.
 - Node tags (`Uin`, `Uut`, …) anchor to `b.P(...)` points, not parts, so they get a tooltip but no highlight.
 
 ## Gotchas

@@ -1,8 +1,11 @@
+import { bands4 } from "./markings.mjs";
+
 const LEADER = { "c-purple": "#534AB7", "c-amber": "#BA7517", "c-teal": "#0F6E56", "c-gray": "#5F5E5A" };
 export const ROW = { a: 4, b: 5, c: 6, d: 7, e: 8, f: 10, g: 11, h: 12, i: 13, j: 14, tp: 1, tn: 2, bp: 16, bn: 17 };
 
 const f = (n) => Math.round(n * 10) / 10;
 const pt = (p) => `${p[0]},${p[1]}`;
+const attr = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 17, X0 = view === "top" ? (680 - (cols + 1) * S) / 2 : 330, Y0 = 150 } = {}) {
   const flat = view === "top";
@@ -77,7 +80,7 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
 
   const tint = (c, v1, v2, fill) => tints.push([c, v1, v2, fill]);
 
-  const axial = (c1, v1, c2, v2, { body = "#C9A86A", bands = ["#993C1D", "#444441", "#993C1D"], width = 6.5 } = {}) => {
+  const axial = (c1, v1, c2, v2, { body = "#C9A86A", bands = ["#993C1D", "#444441", "#993C1D"], at, width = 6.5 } = {}) => {
     const h = 5;
     const a = hole(c1, v1);
     const b = hole(c2, v2);
@@ -93,12 +96,14 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
     const nx = (-dy / L) * (width / 2);
     const ny = (dx / L) * (width / 2);
     bands.forEach((col, i) => {
-      const q = mid(a2, b2, 0.35 + i * (0.24 / Math.max(1, bands.length - 1)));
+      const q = mid(a2, b2, at ? at[i] : 0.35 + i * (0.24 / Math.max(1, bands.length - 1)));
       s += line([f(q[0] - nx), f(q[1] - ny)], [f(q[0] + nx), f(q[1] + ny)], col, 1.6, "butt");
     });
     return part(depth((c1 + c2) / 2, (v1 + v2) / 2), s, [f((a2[0] + b2[0]) / 2), f((a2[1] + b2[1]) / 2)]);
   };
-  const resistor = (c1, v1, c2, v2) => axial(c1, v1, c2, v2);
+  // With a value, draws its 4-band code: three value bands together, the tolerance band set apart at the far end.
+  const resistor = (c1, v1, c2, v2, ohms) =>
+    axial(c1, v1, c2, v2, ohms ? { bands: bands4(ohms).map(([, hex]) => hex), at: [0.32, 0.4, 0.48, 0.67] } : {});
   const inductor = (c1, v1, c2, v2) =>
     axial(c1, v1, c2, v2, { body: "#3B6D11", bands: ["#97C459", "#97C459", "#97C459", "#97C459", "#97C459"], width: 9 });
 
@@ -254,8 +259,11 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
       return part(depth(c, v) + 0.4, s, [apex[0], f(apex[1] - 2)]);
     }
     let s = "";
+    const canBase = P(c, v - 0.2, 9);
     for (const dc of [-1, 0, 1]) {
-      s += lead(hole(c + dc, v), P(c + dc * 0.7, v, 9));
+      // TO-92 legs meet the front bottom edge; TO-18 legs end just inside the can's base ellipse, which the body then covers.
+      const end = can ? [f(canBase[0] + dc * 5), f(canBase[1] + 3)] : P(c + dc * 0.7, v, 9);
+      s += lead(hole(c + dc, v), end);
     }
     {
       const lo = P(c - 1.2, v, 0);
@@ -263,7 +271,7 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
       obRect(Math.min(lo[0], hi[0]) - 4, hi[1] - 4, Math.abs(hi[0] - lo[0]) + 8, lo[1] - hi[1] + 8);
     }
     if (can) {
-      const b = P(c, v - 0.2, 9);
+      const b = canBase;
       const r = 9;
       const ry = 5;
       const top = b[1] - 16;
@@ -348,20 +356,23 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
 
   const pills = [];
   const pill = (name, x, y, cls = "c-purple", anchorKey, tip) => pills.push([name, x, y, cls, anchorKey || name, tip]);
-  const tooltip = (x, y, pw, key, linked, [type, value], anchor, VH) => {
-    const w = Math.round(Math.max(type.length * 7.4, value.length * 6.6) + 22);
-    const h = 42;
+  const tooltip = (x, y, pw, key, linked, { type, value, bands, mark }, anchor, VH) => {
+    const bandNames = bands ? bands.map(([name]) => name).join(" · ") : "";
+    const markWidth = bands ? bands.length * 15 + 4 + bandNames.length * 6.6 : (mark || "").length * 6.6;
+    const w = Math.round(Math.max(type.length * 7.4, value.length * 6.6, markWidth) + 22);
+    const h = bands || mark ? 60 : 42;
     const gap = 6;
-    const clampX = (n) => Math.min(Math.max(n, 4), 676 - w);
-    const clampY = (n) => Math.min(Math.max(n, 4), VH - 4 - h);
-    // Each side: tip-box top-left, plus the invisible strip that keeps the tip hovered while the pointer crosses the gap.
-    const sides = [
-      [clampX(x - w / 2), y + 10 + gap, [x - pw / 2, y + 10, pw, gap]],
-      [clampX(x - w / 2), y - 10 - gap - h, [x - pw / 2, y - 10 - gap, pw, gap]],
-      [clampX(x + pw / 2 + gap), clampY(y - h / 2), [x + pw / 2, y - 10, gap, 20]],
-      [clampX(x - pw / 2 - gap - w), clampY(y - h / 2), [x - pw / 2 - gap, y - 10, gap, 20]],
-    ];
-    // Pick the side that covers least of the part (its footprint, else the area round the anchor) and of the leader to it.
+    // Candidate tip-box top-left corners: every 8 px slide along the rows just below and above the tag, and down the
+    // columns just right and left of it, keeping at least 8 px of shared edge so the tip stays visibly attached.
+    const sides = [];
+    for (let l = x - pw / 2 + 8 - w; l <= x + pw / 2 - 8; l += 8) {
+      sides.push([l, y + 10 + gap], [l, y - 10 - gap - h]);
+    }
+    for (let t = y - 10 + 8 - h; t <= y + 10 - 8; t += 8) {
+      sides.push([x + pw / 2 + gap, t], [x - pw / 2 - gap - w, t]);
+    }
+    // Pick the spot that covers least of the part and of the leader to it. Parts have a footprint (centre-line points,
+    // so it is checked with a 5 px margin for stroke width); node tags only have their anchor point, guarded by a box.
     const feet = (anchor && footprint.get(anchor)) || [];
     const score = ([l, t]) => {
       if (l < 4 || t < 4 || l + w > 676 || t + h > VH - 4) {
@@ -371,17 +382,23 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
       if (l < x + pw / 2 && l + w > x - pw / 2 && t < y + 10 && t + h > y - 10) {
         return Infinity;
       }
+      // Tie-break toward a tip centred on its tag.
+      const off = Math.hypot(l + w / 2 - x, t + h / 2 - y) * 0.1;
       if (!anchor) {
-        return 0;
+        return off;
       }
       const r = [l, t, l + w, t + h];
-      const ix = Math.max(0, Math.min(r[2], anchor[0] + 30) - Math.max(r[0], anchor[0] - 30));
-      const iy = Math.max(0, Math.min(r[3], anchor[1] + 26) - Math.max(r[1], anchor[1] - 26));
-      let sc = ix * iy;
-      for (const p of feet) {
-        if (p[0] > r[0] && p[0] < r[2] && p[1] > r[1] && p[1] < r[3]) {
-          sc += 60;
+      let sc = off;
+      if (feet.length) {
+        for (const p of [...feet, anchor]) {
+          if (p[0] > r[0] - 5 && p[0] < r[2] + 5 && p[1] > r[1] - 5 && p[1] < r[3] + 5) {
+            sc += 60;
+          }
         }
+      } else {
+        const ix = Math.max(0, Math.min(r[2], anchor[0] + 30) - Math.max(r[0], anchor[0] - 30));
+        const iy = Math.max(0, Math.min(r[3], anchor[1] + 26) - Math.max(r[1], anchor[1] - 26));
+        sc += ix * iy;
       }
       for (let i = 1; i < 12; i++) {
         const px = x + (anchor[0] - x) * i / 12;
@@ -392,12 +409,28 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
       }
       return sc;
     };
-    const [left, top, bridge] = sides.reduce((best, s) => (score(s) < score(best) ? s : best)).map((v) => (Array.isArray(v) ? v.map(f) : f(v)));
+    const [left, top] = sides.reduce((best, s) => (score(s) < score(best) ? s : best)).map(f);
+    // Invisible strip spanning the gap between tag and tip (or their overlap on an axis they share), so the tip stays
+    // hovered while the pointer crosses over. On a diagonal it is the small rectangle between the two nearest corners.
+    const span = (a0, a1, b0, b1) => (a1 < b0 ? [a1, b0] : b1 < a0 ? [b1, a0] : [Math.max(a0, b0), Math.min(a1, b1)]);
+    const [bx0, bx1] = span(x - pw / 2, x + pw / 2, left, left + w);
+    const [by0, by1] = span(y - 10, y + 10, top, top + h);
+    const bridge = [f(bx0), f(by0), f(Math.max(bx1 - bx0, 1)), f(Math.max(by1 - by0, 1))];
+    const tx = f(left + 11);
+    let marks = "";
+    if (bands) {
+      bands.forEach(([, hex], i) => {
+        marks += `<rect class="tip-swatch" x="${f(tx + i * 15)}" y="${f(top + 42)}" width="12" height="10" rx="2" fill="${hex}"/>`;
+      });
+      marks += `<text class="tip-mark" x="${f(tx + bands.length * 15 + 4)}" y="${f(top + 47)}" dominant-baseline="central">${bandNames}</text>`;
+    } else if (mark) {
+      marks = `<text class="tip-mark" x="${tx}" y="${f(top + 47)}" dominant-baseline="central">${mark}</text>`;
+    }
     return `<g class="tip${linked ? " linked" : ""}" data-for="${key}" visibility="hidden" aria-hidden="true">`
       + `<rect x="${bridge[0]}" y="${bridge[1]}" width="${bridge[2]}" height="${bridge[3]}" fill="transparent"/>`
       + `<rect class="tip-box" x="${left}" y="${top}" width="${w}" height="${h}" rx="6"/>`
-      + `<text class="tip-type" x="${f(left + 11)}" y="${f(top + 14)}" dominant-baseline="central">${type}</text>`
-      + `<text class="tip-value" x="${f(left + 11)}" y="${f(top + 30)}" dominant-baseline="central">${value}</text></g>`;
+      + `<text class="tip-type" x="${tx}" y="${f(top + 14)}" dominant-baseline="central">${type}</text>`
+      + `<text class="tip-value" x="${tx}" y="${f(top + 30)}" dominant-baseline="central">${value}</text>${marks}</g>`;
   };
   const placeAll = (VH) => {
     for (let c = 1; c <= cols; c++) {
@@ -546,10 +579,12 @@ export function makeBoard({ cols = 19, view = "iso", S = view === "top" ? 24 : 1
       const a = anchors[key];
       const linked = partOf.has(a);
       const w = name.length * 8 + 14;
-      const attrs = tip ? ` data-for="${key}" tabindex="0" role="img" aria-label="${name}: ${tip.join(", ")}"` : "";
+      const spoken = tip && [tip.type, tip.value, tip.bands ? `bands ${tip.bands.map(([n]) => n).join(", ")}` : tip.mark].filter(Boolean).join(", ");
+      const attrs = tip ? ` data-for="${key}" tabindex="0" role="img" aria-label="${attr(`${name}: ${spoken}`)}"` : "";
       let s = `<g class="pill ${cls}${linked ? " linked" : ""}"${attrs}>`;
       if (a) {
-        s += `<line x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="#F6F4EE" stroke-width="4.4" stroke-linecap="round"/><line class="leader" x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="${LEADER[cls] || "#534AB7"}" stroke-width="2" stroke-dasharray="6 3.5" stroke-linecap="round"/><circle cx="${a[0]}" cy="${a[1]}" r="3" fill="${LEADER[cls] || "#534AB7"}" stroke="#F6F4EE" stroke-width="1"/>`;
+        const color = LEADER[cls] || "#534AB7";
+        s += `<line class="leader" x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="${color}" stroke-width="2" stroke-linecap="round"/><circle cx="${a[0]}" cy="${a[1]}" r="3" fill="${color}"/>`;
       }
       s += `<rect x="${f(x - w / 2)}" y="${f(y - 10)}" width="${w}" height="20" rx="4" stroke-width="0.5"/><text class="th" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${name}</text></g>`;
       add(s);
