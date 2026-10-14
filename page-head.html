@@ -1,0 +1,93 @@
+<title>Common Emitter Breadboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Archivo+Narrow:wght@500;600&display=swap">
+<style>
+:root {
+  --bg: #F7F7F4;
+  --paper: #FFFFFF;
+  --ink: #23231F;
+  --muted: #66655E;
+  --line: #DCDBD3;
+  --line-strong: #A9A79D;
+  --chip: #F1EFE8;
+  --in: #9A5E10;
+  --out: #0F6E56;
+  --tag-fill: #EEEDFE;
+  --tag-stroke: #534AB7;
+  --tag-ink: #3C3489;
+  --amber-fill: #FAEEDA;
+  --amber-stroke: #BA7517;
+  --amber-ink: #633806;
+  --teal-fill: #E1F5EE;
+  --teal-stroke: #1D9E75;
+  --teal-ink: #085041;
+  --display: "Archivo Narrow", "Arial Narrow", system-ui, sans-serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1B1B19; --paper: #242422; --ink: #ECEBE4; --muted: #A8A69C; --line: #3A3A36; --line-strong: #6A6962; --chip: #2E2E2B;
+    --in: #EF9F27; --out: #5DCAA5;
+    --tag-fill: #3C3489; --tag-stroke: #AFA9EC; --tag-ink: #EEEDFE;
+    --amber-fill: #633806; --amber-stroke: #EF9F27; --amber-ink: #FAEEDA;
+    --teal-fill: #085041; --teal-stroke: #5DCAA5; --teal-ink: #E1F5EE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1B1B19; --paper: #242422; --ink: #ECEBE4; --muted: #A8A69C; --line: #3A3A36; --line-strong: #6A6962; --chip: #2E2E2B;
+  --in: #EF9F27; --out: #5DCAA5;
+  --tag-fill: #3C3489; --tag-stroke: #AFA9EC; --tag-ink: #EEEDFE;
+  --amber-fill: #633806; --amber-stroke: #EF9F27; --amber-ink: #FAEEDA;
+  --teal-fill: #085041; --teal-stroke: #5DCAA5; --teal-ink: #E1F5EE;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--sans); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 56px; }
+main { max-width: 900px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 clamp(28px, 5vw, 40px)/1.1 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font: 600 22px/1.2 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 65ch; }
+.lede { color: var(--muted); }
+figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; }
+figcaption { font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+figcaption b { font: 500 12px var(--mono); color: var(--ink); letter-spacing: 0.04em; }
+.drawing { overflow-x: auto; }
+.drawing svg { display: block; min-width: 560px; width: 100%; height: auto; }
+svg .th { font: 500 14px var(--sans); fill: var(--ink); }
+svg .ts { font: 400 12px var(--sans); fill: var(--muted); }
+svg .bbl { font: 500 11px var(--sans); fill: var(--ink); }
+svg .leader { stroke: var(--muted); stroke-width: 0.6; stroke-dasharray: 3 2; fill: none; }
+svg .c-gray > rect { fill: var(--chip); stroke: var(--line-strong); }
+svg .c-purple > rect { fill: var(--tag-fill); stroke: var(--tag-stroke); }
+svg .c-purple > .th, svg .c-purple > .ts { fill: var(--tag-ink); }
+svg .c-amber > rect { fill: var(--amber-fill); stroke: var(--amber-stroke); }
+svg .c-amber > .th, svg .c-amber > .ts { fill: var(--amber-ink); }
+svg .c-teal > rect { fill: var(--teal-fill); stroke: var(--teal-stroke); }
+svg .c-teal > .th, svg .c-teal > .ts { fill: var(--teal-ink); }
+#sch { --p: var(--ink); --t: var(--muted); }
+#bb { --p: var(--ink); --t: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+.table-wrap { overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td code, p code, li code { font: 400 13px var(--mono); background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.node { font: 500 13px var(--mono); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line-strong); white-space: nowrap; }
+.node.in { color: var(--amber-ink); background: var(--amber-fill); border-color: var(--amber-stroke); }
+.node.out { color: var(--teal-ink); background: var(--teal-fill); border-color: var(--teal-stroke); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card h3 { font: 500 15px var(--sans); margin: 0; }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; }
+dt { font: 400 13px var(--mono); color: var(--muted); }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+section { display: grid; gap: 12px; }
+</style>

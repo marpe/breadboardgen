@@ -1,0 +1,32 @@
+<svg width="100%" viewBox="0 0 680 330" role="img" xmlns="http://www.w3.org/2000/svg"><title>RC circuit schematic</title><desc>Square-wave function generator feeding R = 10 kΩ in series with C = 0.22 µF to ground. CH1 on the generator output, CH2 across the capacitor.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<g fill="none" stroke="#BA7517" stroke-width="1.6" stroke-linecap="round">
+<path d="M110 170 V100 H260"/>
+<circle cx="110" cy="190" r="20"/>
+<path d="M100 196 V184 H110 V196 H120 V184"/>
+</g>
+<rect x="260" y="92" width="80" height="16" rx="2" fill="none" stroke="var(--p)" stroke-width="1.2"/>
+<g fill="none" stroke="#1D9E75" stroke-width="1.6" stroke-linecap="round"><path d="M340 100 H540"/></g>
+<g fill="none" stroke="var(--p)" stroke-width="1.2" stroke-linecap="round">
+<path d="M420 100 V178 M420 188 V270 M110 210 V270 H540"/>
+<path d="M402 178 H438 M402 188 H438" stroke-width="2"/>
+<path d="M300 270 V284 M290 284 H310 M294 289 H306 M298 294 H302"/>
+</g>
+<circle cx="420" cy="100" r="3.5" fill="#1D9E75"/>
+<circle cx="200" cy="100" r="3.5" fill="#BA7517"/>
+<circle cx="544" cy="100" r="4" fill="none" stroke="#1D9E75" stroke-width="1.2"/>
+<circle cx="544" cy="270" r="4" fill="none" stroke="var(--p)" stroke-width="1.2"/>
+<text class="th" x="556" y="100" dominant-baseline="central">Uut</text>
+<text class="th" x="556" y="270" dominant-baseline="central">GND</text>
+<text class="th" x="82" y="182" text-anchor="end" dominant-baseline="central">Generator</text>
+<text class="ts" x="82" y="199" text-anchor="end" dominant-baseline="central">square, 5 V</text>
+<text class="th" x="152" y="118" text-anchor="middle">Uin</text>
+<text class="th" x="300" y="128" text-anchor="middle">R</text>
+<text class="ts" x="300" y="145" text-anchor="middle">10 kΩ</text>
+<text class="th" x="450" y="178">C</text><text class="ts" x="450" y="195">0.22 µF</text>
+<g class="c-amber"><rect x="160" y="22" width="80" height="36" rx="6" stroke-width="0.5"/><text class="th" x="200" y="33" text-anchor="middle" dominant-baseline="central">CH1</text><text class="ts" x="200" y="49" text-anchor="middle" dominant-baseline="central">Uin</text></g>
+<path d="M200 58 V92" fill="none" stroke="#BA7517" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="364" y="22" width="112" height="36" rx="6" stroke-width="0.5"/><text class="th" x="420" y="33" text-anchor="middle" dominant-baseline="central">CH2</text><text class="ts" x="420" y="49" text-anchor="middle" dominant-baseline="central">Uut, across C</text></g>
+<path d="M420 58 V92" fill="none" stroke="#1D9E75" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text class="ts" x="340" y="320" text-anchor="middle">Generator ground and both scope clips go to GND</text>
+</svg>

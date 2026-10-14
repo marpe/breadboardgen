@@ -1,0 +1,32 @@
+<svg width="100%" viewBox="0 0 680 330" role="img" xmlns="http://www.w3.org/2000/svg"><title>RL circuit schematic</title><desc>Square-wave generator feeding inductor L1 in series with R1 = 1 kΩ to ground. Uut is taken across R1. Scope CH1 at Uin, CH2 at Uut.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<g fill="none" stroke="#BA7517" stroke-width="1.6" stroke-linecap="round">
+<path d="M110 170 V100 H240"/>
+<circle cx="110" cy="190" r="20"/>
+<path d="M100 196 V184 H110 V196 H120 V184"/>
+</g>
+<path d="M240 100 a10 10 0 0 1 20 0 a10 10 0 0 1 20 0 a10 10 0 0 1 20 0 a10 10 0 0 1 20 0" fill="none" stroke="var(--p)" stroke-width="1.6"/>
+<g fill="none" stroke="#1D9E75" stroke-width="1.6" stroke-linecap="round"><path d="M320 100 H540"/></g>
+<g fill="none" stroke="var(--p)" stroke-width="1.2" stroke-linecap="round">
+<path d="M420 100 V140 M420 220 V270 M110 210 V270 H540"/>
+<rect x="412" y="140" width="16" height="80" rx="2"/>
+<path d="M300 270 V284 M290 284 H310 M294 289 H306 M298 294 H302"/>
+</g>
+<circle cx="420" cy="100" r="3.5" fill="#1D9E75"/>
+<circle cx="200" cy="100" r="3.5" fill="#BA7517"/>
+<circle cx="544" cy="100" r="4" fill="none" stroke="#1D9E75" stroke-width="1.2"/>
+<circle cx="544" cy="270" r="4" fill="none" stroke="var(--p)" stroke-width="1.2"/>
+<text class="th" x="556" y="100" dominant-baseline="central">Uut+</text>
+<text class="th" x="556" y="270" dominant-baseline="central">Uut−</text>
+<text class="th" x="82" y="182" text-anchor="end" dominant-baseline="central">Generator</text>
+<text class="ts" x="82" y="199" text-anchor="end" dominant-baseline="central">square wave</text>
+<text class="th" x="152" y="118" text-anchor="middle">Uin+</text>
+<text class="th" x="280" y="124" text-anchor="middle">L1</text>
+<text class="ts" x="280" y="141" text-anchor="middle">try several, e.g. 10 mH</text>
+<text class="th" x="436" y="176">R1</text><text class="ts" x="436" y="193">1 kΩ</text>
+<g class="c-amber"><rect x="160" y="22" width="80" height="36" rx="6" stroke-width="0.5"/><text class="th" x="200" y="33" text-anchor="middle" dominant-baseline="central">CH1</text><text class="ts" x="200" y="49" text-anchor="middle" dominant-baseline="central">Uin</text></g>
+<path d="M200 58 V92" fill="none" stroke="#BA7517" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<g class="c-teal"><rect x="380" y="22" width="80" height="36" rx="6" stroke-width="0.5"/><text class="th" x="420" y="33" text-anchor="middle" dominant-baseline="central">CH2</text><text class="ts" x="420" y="49" text-anchor="middle" dominant-baseline="central">Uut</text></g>
+<path d="M420 58 V92" fill="none" stroke="#1D9E75" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text class="ts" x="340" y="320" text-anchor="middle">Uin− and Uut− are the common ground: generator ground and both scope clips go here</text>
+</svg>

@@ -1,0 +1,71 @@
+<svg width="100%" viewBox="0 0 680 480" role="img" xmlns="http://www.w3.org/2000/svg"><title>Common emitter amplifier schematic</title><desc>NPN transistor Q3 with voltage divider bias R1 and R2, collector resistor R3, emitter resistor R4 bypassed by C3, input coupling C1 from a signal generator, output coupling C2, scope CH1 at Uin and CH2 at Uut.</desc>
+<g fill="none" stroke="var(--p)" stroke-width="1.2" stroke-linecap="round">
+<path d="M200 70 H370"/>
+<path d="M110 430 H440"/>
+<path d="M260 70 V95 M260 155 V295 M260 355 V430"/>
+<rect x="252" y="95" width="16" height="60" rx="2"/>
+<rect x="252" y="295" width="16" height="60" rx="2"/>
+<path d="M260 240 H330"/>
+<path d="M370 70 V85 M370 145 V208"/>
+<rect x="362" y="85" width="16" height="60" rx="2"/>
+<path d="M370 208 L332 229"/>
+<path d="M332 251 L370 272 V345 M370 405 V430"/>
+<rect x="362" y="345" width="16" height="60" rx="2"/>
+<path d="M370 320 H440 V367 M440 377 V430"/>
+<path d="M425 367 H455"/>
+<path d="M425 377 Q440 371 455 377"/>
+
+</g>
+<path d="M330 216 V264" stroke="var(--p)" stroke-width="3" stroke-linecap="round"/>
+<circle cx="352" cy="240" r="30" fill="none" stroke="var(--p)" stroke-width="0.8"/>
+<path d="M370 272 L358 270 L364 261 Z" fill="var(--p)"/>
+<path d="M320 446 H340 M324 451 H336 M328 456 H332" stroke="var(--p)" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M330 430 V446" stroke="var(--p)" stroke-width="1.2"/>
+<g fill="none" stroke="#BA7517" stroke-width="1.6" stroke-linecap="round">
+<path d="M110 240 H180 M190 240 H260"/>
+<path d="M180 225 V255"/>
+<path d="M190 225 V255"/>
+<path d="M110 240 V312 M110 348 V430"/>
+<circle cx="110" cy="330" r="18"/>
+<path d="M100 330 Q105 320 110 330 T120 330"/>
+</g>
+<g fill="none" stroke="#1D9E75" stroke-width="1.6" stroke-linecap="round">
+<path d="M370 160 H470 M480 160 H560"/>
+<path d="M470 145 V175"/>
+<path d="M480 145 V175"/>
+</g>
+<circle cx="260" cy="240" r="3.5" fill="var(--p)"/>
+<circle cx="370" cy="160" r="3.5" fill="var(--p)"/>
+<circle cx="370" cy="320" r="3.5" fill="var(--p)"/>
+<circle cx="110" cy="240" r="3.5" fill="#BA7517"/>
+<circle cx="560" cy="160" r="3.5" fill="#1D9E75"/>
+<circle cx="260" cy="70" r="3.5" fill="var(--p)"/>
+<circle cx="260" cy="430" r="3.5" fill="var(--p)"/>
+<circle cx="370" cy="430" r="3.5" fill="var(--p)"/>
+<circle cx="440" cy="430" r="3.5" fill="var(--p)"/>
+<circle cx="330" cy="430" r="3.5" fill="var(--p)"/>
+<circle cx="110" cy="430" r="3.5" fill="var(--p)"/>
+<text class="th" x="190" y="70" text-anchor="end" dominant-baseline="central">V1 +12 V</text>
+<text class="th" x="470" y="430" text-anchor="start" dominant-baseline="central">GND</text>
+<text class="ts" x="460" y="360" text-anchor="start" dominant-baseline="central">+</text>
+<text class="th" x="276" y="117">R1</text><text class="ts" x="276" y="134">27 kΩ</text>
+<text class="th" x="276" y="317">R2</text><text class="ts" x="276" y="334">12 kΩ</text>
+<text class="th" x="386" y="107">R3</text><text class="ts" x="386" y="124">2.2 kΩ</text>
+<text class="th" x="386" y="367">R4</text><text class="ts" x="386" y="384">1.5 kΩ</text>
+<text class="th" x="466" y="380">C3</text><text class="ts" x="466" y="397">100 µF</text>
+<text class="th" x="185" y="205" text-anchor="middle">C1</text><text class="ts" x="185" y="219" text-anchor="middle">1 µF</text>
+<text class="th" x="475" y="124" text-anchor="middle">C2</text><text class="ts" x="475" y="138" text-anchor="middle">1 µF</text>
+<text class="th" x="396" y="232">Q3</text><text class="ts" x="396" y="249">BC108B</text>
+<text class="ts" x="248" y="226" text-anchor="end">B</text>
+<text class="ts" x="356" y="172" text-anchor="end">C</text>
+<text class="ts" x="356" y="308" text-anchor="end">E</text>
+<text class="th" x="136" y="324">Signal gen</text><text class="ts" x="136" y="341">1 kHz, 10 mVpp</text>
+<text class="th" x="96" y="250" text-anchor="end" dominant-baseline="central">Uin</text>
+<g class="c-amber"><rect x="70" y="150" width="80" height="36" rx="6" stroke-width="0.5"/><text class="th" x="110" y="161" text-anchor="middle" dominant-baseline="central">CH1</text><text class="ts" x="110" y="177" text-anchor="middle" dominant-baseline="central">Uin</text></g>
+<path d="M110 186 V232" fill="none" stroke="#BA7517" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text class="th" x="574" y="160" dominant-baseline="central">Uut</text>
+<g class="c-teal"><rect x="520" y="70" width="80" height="36" rx="6" stroke-width="0.5"/><text class="th" x="560" y="81" text-anchor="middle" dominant-baseline="central">CH2</text><text class="ts" x="560" y="97" text-anchor="middle" dominant-baseline="central">Uut</text></g>
+<path d="M560 106 V152" fill="none" stroke="#1D9E75" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<text class="ts" x="340" y="470" text-anchor="middle">Probe ground clips and generator ground return to GND</text>
+</svg>
