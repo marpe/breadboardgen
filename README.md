@@ -16,6 +16,10 @@ Builds `out/labb5.html`: schematics and 3D breadboard layouts (with instruments,
 
 All generated files go to `out/` (git-ignored). Set `PYTHON` to override the interpreter; otherwise `python3`, then `python`, is used.
 
+## Deploy
+
+`.github/workflows/pages.yml` publishes the page to GitHub Pages. On every push to `master` it builds the page and serves `labb5.html` as the site's `index.html`. One-time setup: in the repository, set Settings → Pages → Source to **GitHub Actions**. The page has to be served over HTTP(S) (not opened as a file) because it imports its 3D viewer at runtime.
+
 ## Files
 
 | File | What it does |
