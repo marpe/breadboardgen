@@ -1,25 +1,29 @@
-import { writeFileSync, readFileSync, existsSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { makeBoard, ROW as R } from "./lib.mjs";
 
 const AMBER = "#BA7517";
 const TEAL = "#1D9E75";
 const RED = "#E24B4A";
 const BLACK = "#2C2C2A";
+const OUT = "out";
 const pillsFile = "pills.json";
 const placed = existsSync(pillsFile) ? JSON.parse(readFileSync(pillsFile, "utf8")) : {};
+mkdirSync(OUT, { recursive: true });
 
-const finish = (key, b, names, VH, title, desc) => {
-  const spec = placed[key] || {};
+const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
+  const spec = { ...pinned, ...placed[key] };
   const report = {};
   for (const [name, anchorKey, cls] of names) {
     const a = b.anchors[anchorKey];
     report[anchorKey] = a;
     const pos = spec[anchorKey] || [null, null];
-    b.pill(name, pos[0], pos[1], cls || "c-purple", anchorKey);
+    b.pill(name, pos[0], pos[1], cls || "c-purple", anchorKey, info[anchorKey]);
   }
-  writeFileSync(`${key}.svg`, b.render(VH, title, desc));
+  writeFileSync(`${OUT}/${key}.svg`, b.render(VH, title, desc, `bb-${key}`));
   console.log(key, JSON.stringify(report));
 };
+
+const IN_NODE = ["Input node", "CH1 probe, generator signal"];
 
 {
   const b = makeBoard({ cols: 12, S: 20, X0: 360, Y0: 150 });
@@ -33,8 +37,17 @@ const finish = (key, b, names, VH, title, desc) => {
   b.probe([545, 110], 5, R.e, RED);
   b.probe([605, 110], 9, R.tn, BLACK);
   b.anchors.node = b.P(5, 6.5);
-  finish("led", b, [["D1", "D1"], ["R", "R"], ["LED−R node", "node", "c-gray"]], 500,
-    "LED indicator on a breadboard", "LED D1 from the +12 V rail into column 5, resistor R from column 5 to the ground rail, multimeter across R.");
+  finish("led", b, {
+    names: [["D1", "D1"], ["R", "R"], ["LED−R node", "node", "c-gray"]],
+    info: {
+      D1: ["LED", "2.5 V at 20 mA"],
+      R: ["Resistor", "470 Ω, 0.5 W"],
+      node: ["Node", "LED cathode, R and meter probe"],
+    },
+    VH: 500,
+    title: "LED indicator on a breadboard",
+    desc: "LED D1 from the +12 V rail into column 5, resistor R from column 5 to the ground rail, multimeter across R.",
+  });
 }
 
 const filter = (key, kind) => {
@@ -46,26 +59,93 @@ const filter = (key, kind) => {
   b.tint(3, 4, 8, "#FAC775");
   b.tint(8, 4, 8, "#9FE1CB");
   const names = [];
+  let info;
   if (kind === "rl") {
     b.anchors.L1 = b.inductor(3, R.c, 8, R.c);
     b.anchors.R1 = b.resistor(8, R.b, 10, R.tn);
     names.push(["L1", "L1"], ["R1", "R1"]);
+    info = {
+      L1: ["Inductor", "e.g. 10 mH, try several"],
+      R1: ["Resistor", "1 kΩ"],
+      Uut: ["Output node", "CH2 probe, across R1"],
+    };
   } else {
     b.anchors.R = b.resistor(3, R.c, 8, R.c);
     b.anchors.C = b.film(8, R.b, 10, R.tn);
     names.push(["R", "R"], ["C", "C"]);
+    info = {
+      R: ["Resistor", "10 kΩ"],
+      C: ["Film capacitor", "0.22 µF"],
+      Uut: ["Output node", "CH2 probe, across C"],
+    };
   }
   b.probe([530, 110], 3, R.a, AMBER, [4, R.tn]);
   b.probe([590, 110], 8, R.a, TEAL, [9, R.tn]);
   b.anchors.Uin = b.P(3, 8.3);
   b.anchors.Uut = b.P(8, 8.3);
   names.push(["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"]);
-  finish(key, b, names, 530,
-    kind === "rl" ? "RL circuit on a breadboard" : "RC circuit on a breadboard",
-    kind === "rl" ? "Inductor L1 from the Uin strip to the Uut strip, R1 from Uut to ground, generator and two scope probes." : "Resistor R from the Uin strip to the Uut strip, capacitor C from Uut to ground, generator and two scope probes.");
+  finish(key, b, {
+    names,
+    info: { ...info, Uin: IN_NODE },
+    VH: 530,
+    title: kind === "rl" ? "RL circuit on a breadboard" : "RC circuit on a breadboard",
+    desc: kind === "rl" ? "Inductor L1 from the Uin strip to the Uut strip, R1 from Uut to ground, generator and two scope probes." : "Resistor R from the Uin strip to the Uut strip, capacitor C from Uut to ground, generator and two scope probes.",
+  });
 };
 filter("rl", "rl");
 filter("rc", "rc");
+
+{
+  const b = makeBoard();
+  b.box(40, 40, 150, 52, "V1 bench supply", ["+12 V / 0 V"]);
+  b.wire([190, 58], 2, R.tp, RED);
+  b.wire([190, 74], 2, R.tn, BLACK, { casing: true });
+  b.box(20, 196, 160, 52, "Signal generator", ["1 kHz, 10 mVpp"]);
+  b.wire([180, 214], 8, R.d, AMBER);
+  b.wire([100, 248], 3, R.bn, BLACK, { dashed: true });
+  b.box(500, 40, 150, 70, "Oscilloscope", ["CH1 Uin · CH2 Uut", "Ground clips to GND rail"]);
+  b.tint(8, 4, 8, "#FAC775");
+  b.tint(16, 4, 8, "#9FE1CB");
+  b.jumper(10, R.e, 7, R.f, "#7F77DD");
+  b.jumper(11, R.e, 11, R.f, "#D4537E");
+  b.anchors.bridge = b.jumper(19, R.tn, 19, R.bn, BLACK, 26);
+  b.anchors.R1 = b.resistor(11, R.a, 11, R.tp);
+  b.anchors.R3 = b.resistor(12, R.a, 14, R.tp);
+  b.anchors.R2 = b.resistor(11, R.j, 11, R.bn);
+  b.anchors.R4 = b.resistor(7, R.j, 7, R.bn);
+  b.anchors.C1 = b.film(8, R.b, 11, R.b);
+  b.anchors.C2 = b.film(12, R.c, 16, R.c);
+  b.anchors.C3 = b.ecap(7, R.h, 9, R.bn);
+  b.anchors.Q3 = b.transistor(11, R.d, { can: true });
+  b.probe([530, 110], 8, R.a, AMBER, [9, R.tn]);
+  b.probe([575, 110], 16, R.a, TEAL, [15, R.tn]);
+  b.anchors.Uin = b.P(8, 8.3);
+  b.anchors.Uut = b.P(16, 6);
+  finish("amp", b, {
+    names: [["R1", "R1"], ["R3", "R3"], ["C1", "C1"], ["C2", "C2"], ["Q3", "Q3"], ["R2", "R2"], ["R4", "R4"], ["C3", "C3"],
+      ["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"], ["GND bridge", "bridge", "c-gray"]],
+    info: {
+      R1: ["Resistor, upper bias", "27 kΩ"],
+      R2: ["Resistor, lower bias", "12 kΩ"],
+      R3: ["Resistor, collector", "2.2 kΩ"],
+      R4: ["Resistor, emitter", "1.5 kΩ"],
+      C1: ["Film capacitor, input", "1 µF"],
+      C2: ["Film capacitor, output", "1 µF"],
+      C3: ["Electrolytic capacitor", "100 µF, + to emitter"],
+      Q3: ["NPN transistor", "BC108B, TO-18"],
+      Uin: IN_NODE,
+      Uut: ["Output node", "CH2 probe, after C2"],
+      bridge: ["Jumper", "Joins top and bottom − rails"],
+    },
+    pinned: {
+      R1: [455, 228], R3: [484, 308], C1: [420, 212], C2: [416, 322], Q3: [352, 226], R2: [292, 390], R4: [176, 352], C3: [232, 276],
+      Uin: [290, 312], Uut: [412, 356], bridge: [548, 430],
+    },
+    VH: 510,
+    title: "Common emitter amplifier on a breadboard",
+    desc: "Isometric breadboard with components R1, R2, R3, R4, C1, C2, C3 and Q3, plus supply, signal generator and scope probe connections.",
+  });
+}
 
 const astable = (key, variable) => {
   const b = makeBoard({ cols: 21, S: 17, X0: 310, Y0: 165 });
@@ -81,6 +161,9 @@ const astable = (key, variable) => {
   const names = [];
   const Q1 = variable ? "UT1" : "Q1";
   const Q2 = variable ? "UT2" : "Q2";
+  const cap = ["Electrolytic capacitor", "10 µF, + to collector side"];
+  const npn = ["NPN transistor", "BC547B or similar"];
+  const info = { C1: cap, C2: cap, Q1: npn, Q2: npn, bridge: ["Jumper", "Joins top and bottom − rails"] };
   b.anchors.Q1 = b.transistor(6, R.c);
   b.anchors.Q2 = b.transistor(15, R.c);
   b.anchors.C1 = b.ecap(7, R.b, 15, R.a, [9.6, 4.2]);
@@ -91,6 +174,9 @@ const astable = (key, variable) => {
     b.anchors.R2b = b.resistor(6, R.b, 4, R.tp);
     b.anchors.R2a = b.resistor(15, R.b, 17, R.tp);
     names.push(["R1", "R1a"], ["R1", "R1b"], ["R2", "R2a"], ["R2", "R2b"], ["C", "C1"], ["C", "C2"]);
+    const rc = ["Resistor, collector", "1 kΩ"];
+    const rb = ["Resistor, base", "47 kΩ"];
+    Object.assign(info, { R1a: rc, R1b: rc, R2a: rb, R2b: rb });
   } else {
     b.anchors.bridgeP = b.jumper(20, R.tp, 20, R.bp, RED, 30);
     b.anchors.LED1 = b.led(3, R.tp, 3, R.a);
@@ -102,6 +188,14 @@ const astable = (key, variable) => {
     b.anchors.R2a = b.resistor(15, R.e, 11, R.f);
     b.anchors.R2b = b.resistor(6, R.e, 9, R.f);
     names.push(["LED1", "LED1"], ["LED2", "LED2"], ["R1", "R1a"], ["R4", "R1b"], ["R2", "R2a"], ["R3", "R2b"], ["RP1", "RP1"], ["C1", "C1"], ["C2", "C2"]);
+    const led = ["LED, collector line", "about 15 mA"];
+    const rc = ["Resistor, LED current", "470 Ω"];
+    const rb = ["Resistor, base", "10 kΩ"];
+    Object.assign(info, {
+      LED1: led, LED2: led, R1a: rc, R1b: rc, R2a: rb, R2b: rb,
+      RP1: ["Trimmer potentiometer", "100 kΩ"],
+      bridgeP: ["Jumper", "Joins top and bottom + rails"],
+    });
   }
   names.push([Q1, "Q1"], [Q2, "Q2"], ["GND bridge", "bridge", "c-gray"]);
   if (variable) {
@@ -109,9 +203,13 @@ const astable = (key, variable) => {
   }
   b.probe([540, 110], 7, R.d, AMBER, [8, R.tn]);
   b.probe([610, 110], 14, R.d, TEAL, [13, R.tn]);
-  finish(key, b, names, 560,
-    variable ? "Variable astable multivibrator on a breadboard" : "Astable multivibrator on a breadboard",
-    variable ? "Two transistors UT1 and UT2 with cross-coupled capacitors, LEDs in the collector lines, RP1 setting the base resistances, scope probes on both collectors." : "Two transistors Q1 and Q2 with cross-coupled capacitors C, collector resistors R1, base resistors R2, scope probes on both collectors.");
+  finish(key, b, {
+    names,
+    info,
+    VH: 560,
+    title: variable ? "Variable astable multivibrator on a breadboard" : "Astable multivibrator on a breadboard",
+    desc: variable ? "Two transistors UT1 and UT2 with cross-coupled capacitors, LEDs in the collector lines, RP1 setting the base resistances, scope probes on both collectors." : "Two transistors Q1 and Q2 with cross-coupled capacitors C, collector resistors R1, base resistors R2, scope probes on both collectors.",
+  });
 };
 astable("ast4", false);
 astable("ast5", true);

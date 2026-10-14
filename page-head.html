@@ -1,4 +1,6 @@
-<title>Common Emitter Breadboard</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labb 5 Breadboard Guide</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Archivo+Narrow:wght@500;600&display=swap">
@@ -68,8 +70,7 @@ svg .c-amber > rect { fill: var(--amber-fill); stroke: var(--amber-stroke); }
 svg .c-amber > .th, svg .c-amber > .ts { fill: var(--amber-ink); }
 svg .c-teal > rect { fill: var(--teal-fill); stroke: var(--teal-stroke); }
 svg .c-teal > .th, svg .c-teal > .ts { fill: var(--teal-ink); }
-#sch { --p: var(--ink); --t: var(--muted); }
-#bb { --p: var(--ink); --t: var(--muted); }
+.drawing { --p: var(--ink); --t: var(--muted); }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
@@ -90,4 +91,25 @@ dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; f
 dt { font: 400 13px var(--mono); color: var(--muted); }
 dd { margin: 0; font-variant-numeric: tabular-nums; }
 section { display: grid; gap: 12px; }
+svg text { font-family: var(--sans); }
+nav.jump { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.jump a { font: 500 13px var(--sans); color: var(--ink); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; background: var(--paper); }
+nav.jump a:hover, nav.jump a:focus-visible { border-color: var(--ink); outline: none; }
+nav.jump a span { font-family: var(--mono); color: var(--muted); margin-right: 6px; }
+.circuit { display: grid; gap: 18px; padding-top: 28px; border-top: 1px solid var(--line); scroll-margin-top: 16px; }
+.circuit header p { color: var(--muted); }
+.note { font-size: 14px; color: var(--muted); }
+.swatch-tag { display: inline-block; width: 22px; height: 12px; border-radius: 3px; border: 1px solid; }
+:root { --part-glow: drop-shadow(0 0 1.5px var(--tag-stroke)) drop-shadow(0 0 5px var(--tag-stroke)); }
+.drawing svg :is(.part, .overlay) { transition: opacity 120ms ease-out; }
+.drawing svg:has(.pill.linked:is(:hover, :focus-visible), .tip.linked:hover) :is(.part, .overlay) { opacity: 0.25; }
+.drawing svg .pill[tabindex] { cursor: help; outline: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.drawing svg .pill[tabindex]:is(:hover, :focus-visible) > rect { stroke-width: 2; }
+.drawing svg .pill[tabindex]:is(:hover, :focus-visible) > .leader { stroke-width: 3; }
+.drawing svg .tip-box { fill: var(--ink); }
+.drawing svg .tip-type { font: 500 13px var(--sans); fill: var(--paper); }
+.drawing svg .tip-value { font: 400 12px var(--sans); fill: var(--paper); opacity: 0.8; }
+@media (prefers-reduced-motion: reduce) {
+  .drawing svg :is(.part, .overlay) { transition: none; }
+}
 </style>

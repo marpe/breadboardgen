@@ -1,18 +1,12 @@
-head = open("page-head.html").read()
-head = head.replace("<title>Common Emitter Breadboard</title>", "<title>Labb 5 Breadboard Guide</title>")
-head = head.replace("#sch { --p: var(--ink); --t: var(--muted); }\n#bb { --p: var(--ink); --t: var(--muted); }", ".drawing { --p: var(--ink); --t: var(--muted); }")
-extra = """<style>
-svg text { font-family: var(--sans); }
-nav.jump { display: flex; flex-wrap: wrap; gap: 8px; }
-nav.jump a { font: 500 13px var(--sans); color: var(--ink); text-decoration: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; background: var(--paper); }
-nav.jump a:hover, nav.jump a:focus-visible { border-color: var(--ink); outline: none; }
-nav.jump a span { font-family: var(--mono); color: var(--muted); margin-right: 6px; }
-.circuit { display: grid; gap: 18px; padding-top: 28px; border-top: 1px solid var(--line); scroll-margin-top: 16px; }
-.circuit header p { color: var(--muted); }
-.note { font-size: 14px; color: var(--muted); }
-.swatch-tag { display: inline-block; width: 22px; height: 12px; border-radius: 3px; border: 1px solid; }
-</style>
-"""
+OUT = "out"
+
+
+def read(path):
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
+head = read("page-head.html")
 
 legend = """<section class="card" aria-label="How to read the drawings">
 <h3>How to read the drawings</h3>
@@ -54,8 +48,8 @@ def cards(items):
 def section(sid, eyebrow, title, lede, sch, bb, rows, card_items, sch_cap, bb_cap):
     return f"""<section class="circuit" id="{sid}">
 <header><div class="eyebrow">{eyebrow}</div><h2>{title}</h2><p>{lede}</p></header>
-<figure><figcaption><b>SCHEMATIC</b> {sch_cap}</figcaption><div class="drawing">{open(sch).read()}</div></figure>
-<figure><figcaption><b>BREADBOARD</b> {bb_cap}</figcaption><div class="drawing">{open(bb).read()}</div></figure>
+<figure><figcaption><b>SCHEMATIC</b> {sch_cap}</figcaption><div class="drawing">{read(sch)}</div></figure>
+<figure><figcaption><b>BREADBOARD</b> {bb_cap}</figcaption><div class="drawing">{read(f"{OUT}/{bb}")}</div></figure>
 {table(rows)}
 {cards(card_items)}
 </section>
@@ -67,7 +61,7 @@ S = []
 S.append(section(
     "led", "Prep task · page 2", "LED voltage indicator",
     "A LED shows that the 12 V supply is on. R limits the current so the LED gets its 2.5 V and 20 mA.",
-    "sch_led.svg", "led.svg",
+    "schematics/sch_led.svg", "led.svg",
     [
         (node("Uin +12 V"), "Top + rail", "Supply red lead at col 2; LED anode (long leg) at col 5"),
         (node("LED–R"), "Col 5, rows a–e", f"LED cathode {c('5a')}, R {c('5c')}, multimeter red probe {c('5e')}"),
@@ -92,7 +86,7 @@ S.append(section(
 S.append(section(
     "rl", "Figure 1 · page 3", "RL circuit",
     "The inductor resists fast changes in current, so a square wave at Uin comes out with rounded edges across R1. The rounding gets worse as the frequency rises.",
-    "sch_rl.svg", "rl.svg",
+    "schematics/sch_rl.svg", "rl.svg",
     [
         (node("Uin", "in"), "Col 3, rows a–e", f"CH1 probe tip {c('3a')}, L1 {c('3c')}, generator signal {c('3e')}"),
         (node("Uut", "out"), "Col 8, rows a–e", f"CH2 probe tip {c('8a')}, R1 {c('8b')}, L1 {c('8c')}"),
@@ -116,7 +110,7 @@ S.append(section(
 S.append(section(
     "rc", "Figure 3 · page 4", "RC charging circuit",
     "The capacitor charges and discharges through R each time the square wave flips. CH2 shows the charge curve.",
-    "sch_rc.svg", "rc.svg",
+    "schematics/sch_rc.svg", "rc.svg",
     [
         (node("Uin", "in"), "Col 3, rows a–e", f"CH1 probe tip {c('3a')}, R {c('3c')}, generator signal {c('3e')}"),
         (node("Uut", "out"), "Col 8, rows a–e", f"CH2 probe tip {c('8a')}, C {c('8b')}, R {c('8c')}"),
@@ -151,7 +145,7 @@ amp_rows = [
 S.append(section(
     "amp", "Figure 2 · page 5", "Common emitter amplifier",
     "One BC108B gives a large, inverted copy of a small input signal.",
-    "sch.svg", "bb.svg", amp_rows,
+    "schematics/sch.svg", "amp.svg", amp_rows,
     [
         ("Expected DC levels", "dl", [
             ("V<sub>B</sub>", "≈ 3.6 V (12 V × 12k / 39k)"),
@@ -177,7 +171,7 @@ S.append(section(
 S.append(section(
     "ast4", "Figure 4 · page 6", "Astable multivibrator",
     "Two transistors take turns switching each other on and off through the capacitors, so each collector makes a square wave. Values here are examples, since the PDF doesn't give any.",
-    "sch_ast4.svg", "ast4.svg",
+    f"{OUT}/sch_ast4.svg", "ast4.svg",
     [
         (node("+9 V"), "Top + rail", "Supply red lead col 2; R1 at cols 7 and 14; R2 at cols 4 and 17"),
         (node("GND"), "Bottom − rail, top − rail via col 21 bridge", "Supply black lead col 1 (bottom); emitter jumpers from cols 5 and 16; CH1 clip col 8 and CH2 clip col 13 (top)"),
@@ -212,7 +206,7 @@ S.append(section(
 S.append(section(
     "ast5", "Figure 5 · page 6", "Variable astable multivibrator",
     "The Sagitta kit version: LEDs in the collector lines show the switching, and RP1 shifts resistance between the two base resistors so you can change the blink times. Values are examples.",
-    "sch_ast5.svg", "ast5.svg",
+    f"{OUT}/sch_ast5.svg", "ast5.svg",
     [
         (node("+9 V"), "Top + rail, bottom + rail via col 20 bridge", "Supply red lead col 2; LED1 anode col 3; LED2 anode col 18; RP1 wiper jumper from col 10 (bottom)"),
         (node("GND"), "Bottom − rail, top − rail via col 21 bridge", "Supply black lead col 1 (bottom); emitter jumpers from cols 5 and 16; CH1 clip col 8 and CH2 clip col 13 (top)"),
@@ -249,7 +243,7 @@ S.append(section(
 nav_items = [("led", "p.2", "LED indicator"), ("rl", "Fig 1", "RL circuit"), ("rc", "Fig 3", "RC circuit"), ("amp", "Fig 2", "Amplifier"), ("ast4", "Fig 4", "Astable"), ("ast5", "Fig 5", "Variable astable")]
 nav = '<nav class="jump" aria-label="Circuits">' + "".join(f'<a href="#{i}"><span>{n}</span>{t}</a>' for i, n, t in nav_items) + "</nav>"
 
-body = f"""{extra}<main>
+body = f"""<main>
 <header>
 <div class="eyebrow">TNE108 Labbintroduktion · Labb 5 Analoga kopplingar</div>
 <h1>Labb 5 circuits, schematic to breadboard</h1>
@@ -260,5 +254,6 @@ body = f"""{extra}<main>
 {''.join(S)}
 </main>
 """
-open("labb5.html", "w").write(head + body)
+with open(f"{OUT}/labb5.html", "w", encoding="utf-8") as fh:
+    fh.write(head + body)
 print(len(head + body))

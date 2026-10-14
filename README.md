@@ -1,6 +1,6 @@
 # Labb 5 breadboard guide generator
 
-Builds `labb5.html`: schematics and isometric breadboard layouts for the TNE108 Labb 5 circuits.
+Builds `out/labb5.html`: schematics and isometric breadboard layouts for the TNE108 Labb 5 circuits.
 
 ## Requirements
 
@@ -14,18 +14,19 @@ Builds `labb5.html`: schematics and isometric breadboard layouts for the TNE108 
 ./build.sh
 ```
 
+All generated files go to `out/` (git-ignored). Set `PYTHON` to override the interpreter; otherwise `python3`, then `python`, is used.
+
 ## Files
 
 | File | What it does |
 | --- | --- |
 | `lib.mjs` | Breadboard drawing library: isometric board, parts (resistor, inductor, film and electrolytic caps, LED, trimmer pot, TO-92 or TO-18 transistor), jumpers, instrument boxes, probes and ground clips, hole rings, and automatic tag placement |
-| `circuits.mjs` | Board layouts for the LED indicator, RL, RC and both astable circuits. Writes `led.svg`, `rl.svg`, `rc.svg`, `ast4.svg`, `ast5.svg` |
-| `bb.mjs` | The original standalone generator for the amplifier board (`bb.svg`), with hand-placed tags passed as JSON |
+| `circuits.mjs` | Board layouts for the LED indicator, RL, RC, amplifier and both astable circuits. Writes `led.svg`, `rl.svg`, `rc.svg`, `amp.svg`, `ast4.svg`, `ast5.svg` |
 | `sch_ast.py` | Generates the two astable schematics (`sch_ast4.svg`, `sch_ast5.svg`) |
 | `schematics/` | Hand-written schematics for the amplifier, LED, RL and RC circuits |
-| `build_labb5.py` | Assembles the page from `page-head.html` and all SVGs |
+| `build_labb5.py` | Assembles the page from `page-head.html`, `schematics/` and the generated SVGs |
 | `page-head.html` | Page title, fonts, colour tokens (light and dark) and styles |
-| `prev.py` | Renders an SVG to PNG for a quick look: `python3 prev.py rl.svg rl.png` |
+| `prev.py` | Renders an SVG to PNG for a quick look: `python3 prev.py out/rl.svg rl.png` |
 
 ## Changing a layout
 
@@ -37,4 +38,6 @@ b.resistor(3, R.c, 8, R.c);
 
 puts a resistor from hole 3c to hole 8c.
 
-Tags are placed automatically. To pin one by hand, create `pills.json` like `{"rl": {"L1": [360, 240]}}`.
+Hovering or focusing a tag shows the part's type and value and highlights it on the board. The text comes from each board's `info` map in `circuits.mjs`.
+
+Tags are placed automatically, except on the amplifier board, whose tags are pinned in `circuits.mjs`. To pin one by hand, create `pills.json` like `{"rl": {"L1": [360, 240]}}`; entries there override pins in code.

@@ -12,6 +12,14 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   const base = [];
   const overlay = [];
   const draws = [];
+  // Keyed by the anchor array a part returns, so `b.anchors.R1 = b.resistor(...)` alone links tag R1 to that drawing.
+  const partOf = new WeakMap();
+  const part = (d, s, anchor) => {
+    const item = { d, s };
+    draws.push(item);
+    partOf.set(anchor, item);
+    return anchor;
+  };
   const used = new Map();
   const tints = [];
   const anchors = {};
@@ -76,8 +84,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
       const q = mid(a2, b2, 0.35 + i * (0.24 / Math.max(1, bands.length - 1)));
       s += line([f(q[0] - nx), f(q[1] - ny)], [f(q[0] + nx), f(q[1] + ny)], col, 1.6, "butt");
     });
-    draws.push({ d: depth((c1 + c2) / 2, (v1 + v2) / 2), s });
-    return [f((a2[0] + b2[0]) / 2), f((a2[1] + b2[1]) / 2)];
+    return part(depth((c1 + c2) / 2, (v1 + v2) / 2), s, [f((a2[0] + b2[0]) / 2), f((a2[1] + b2[1]) / 2)]);
   };
   const resistor = (c1, v1, c2, v2) => axial(c1, v1, c2, v2);
   const inductor = (c1, v1, c2, v2) =>
@@ -97,8 +104,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     s += `<path d="M${f(b[0] - r)},${top} L${f(b[0] - r)},${b[1]} A${r},${f(r * 0.55)} 0 0 0 ${f(b[0] + r)},${b[1]} L${f(b[0] + r)},${top} Z" fill="#185FA5" stroke="#042C53" stroke-width="1.3"/>`;
     s += `<rect x="${f(b[0] + r * 0.25)}" y="${top}" width="${f(r * 0.55)}" height="${H}" fill="#B5D4F4"/>`;
     s += `<ellipse cx="${b[0]}" cy="${top}" rx="${r}" ry="${f(r * 0.55)}" fill="#378ADD" stroke="#042C53" stroke-width="1.3"/>`;
-    draws.push({ d: depth(uc, vc) + 0.3, s });
-    return [b[0], f(top - 2)];
+    return part(depth(uc, vc) + 0.3, s, [b[0], f(top - 2)]);
   };
 
   const film = (c1, v1, c2, v2) => {
@@ -113,8 +119,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     obSeg(P(c2, v2), b);
     s += `<rect x="${f(b[0] - w)}" y="${f(b[1] - H)}" width="${w * 2}" height="${H}" rx="2.5" fill="#E8C547" stroke="#633806" stroke-width="1.3"/>`;
     s += `<rect x="${f(b[0] - w + 2)}" y="${f(b[1] - H + 2)}" width="3" height="${H - 4}" rx="1" fill="#F7E3A1"/>`;
-    draws.push({ d: depth(uc, vc) + 0.3, s });
-    return [b[0], f(b[1] - H - 2)];
+    return part(depth(uc, vc) + 0.3, s, [b[0], f(b[1] - H - 2)]);
   };
 
   const led = (ca, va, cc, vc2) => {
@@ -129,8 +134,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     s += `<ellipse cx="${b[0]}" cy="${b[1]}" rx="${r + 1.5}" ry="${f((r + 1.5) * 0.5)}" fill="#A32D2D"/>`;
     s += `<path d="M${f(b[0] - r)},${b[1]} L${f(b[0] - r)},${f(b[1] - 9)} A${r},${r} 0 0 1 ${f(b[0] + r)},${f(b[1] - 9)} L${f(b[0] + r)},${b[1]} Z" fill="#E24B4A" stroke="#791F1F" stroke-width="1.3"/>`;
     s += `<rect x="${f(b[0] - r + 1.5)}" y="${f(b[1] - 12)}" width="2.5" height="9" rx="1" fill="#F7C1C1"/>`;
-    draws.push({ d: depth(uc, vc) + 0.3, s });
-    return [b[0], f(b[1] - 18)];
+    return part(depth(uc, vc) + 0.3, s, [b[0], f(b[1] - 18)]);
   };
 
   const pot = (c, v) => {
@@ -147,8 +151,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     obRect(cen[0] - 22, cen[1] - 6, 44, 22);
     s += `<ellipse cx="${cen[0]}" cy="${cen[1]}" rx="6" ry="3.4" fill="#F1EFE8" stroke="#2C2C2A" stroke-width="1.3"/>`;
     s += line([f(cen[0] - 4), f(cen[1] - 1.5)], [f(cen[0] + 4), f(cen[1] + 1.5)], "#5F5E5A", 1.4);
-    draws.push({ d: depth(c, v) + 0.4, s });
-    return [cen[0], f(cen[1] - 6)];
+    return part(depth(c, v) + 0.4, s, [cen[0], f(cen[1] - 6)]);
   };
 
   const transistor = (c, v, { can = false } = {}) => {
@@ -177,8 +180,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
       s += poly(q, "#2C2C2A", "#1A1A18", 1.3);
       s += poly([q[1], P(c + 1.05, v - 0.55, 9), back[0], q[2]], "#444441", "#1A1A18", 1.3);
     }
-    draws.push({ d: depth(c, v) + 0.4, s });
-    return P(c, v - 0.2, can ? 31 : 30);
+    return part(depth(c, v) + 0.4, s, P(c, v - 0.2, can ? 31 : 30));
   };
 
   const jumper = (c1, v1, c2, v2, color, lift = 12) => {
@@ -187,8 +189,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     const b = hole(c2, v2);
     quad(a, m, b);
     const s = `<path d="M${pt(a)} Q${pt(m)} ${pt(b)}" fill="none" stroke="#2C2C2A" stroke-width="4.2" stroke-linecap="round"/><path d="M${pt(a)} Q${pt(m)} ${pt(b)}" fill="none" stroke="${color}" stroke-width="2.8" stroke-linecap="round"/>`;
-    draws.push({ d: depth((c1 + c2) / 2, (v1 + v2) / 2) - 0.2, s });
-    return P((c1 + c2) / 2, (v1 + v2) / 2, lift / 2);
+    return part(depth((c1 + c2) / 2, (v1 + v2) / 2) - 0.2, s, P((c1 + c2) / 2, (v1 + v2) / 2, lift / 2));
   };
 
   const box = (x, y, w, h, title, lines = []) => {
@@ -245,7 +246,48 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
   };
 
   const pills = [];
-  const pill = (name, x, y, cls = "c-purple", anchorKey) => pills.push([name, x, y, cls, anchorKey || name]);
+  const pill = (name, x, y, cls = "c-purple", anchorKey, tip) => pills.push([name, x, y, cls, anchorKey || name, tip]);
+  const tooltip = (x, y, pw, key, linked, [type, value], anchor, VH) => {
+    const w = Math.round(Math.max(type.length * 7.4, value.length * 6.6) + 22);
+    const h = 42;
+    const gap = 6;
+    const clampX = (n) => Math.min(Math.max(n, 4), 676 - w);
+    const clampY = (n) => Math.min(Math.max(n, 4), VH - 4 - h);
+    // Each side: tip-box top-left, plus the invisible strip that keeps the tip hovered while the pointer crosses the gap.
+    const sides = [
+      [clampX(x - w / 2), y + 10 + gap, [x - pw / 2, y + 10, pw, gap]],
+      [clampX(x - w / 2), y - 10 - gap - h, [x - pw / 2, y - 10 - gap, pw, gap]],
+      [x + pw / 2 + gap, clampY(y - h / 2), [x + pw / 2, y - 10, gap, 20]],
+      [x - pw / 2 - gap - w, clampY(y - h / 2), [x - pw / 2 - gap, y - 10, gap, 20]],
+    ];
+    // Pick the side that covers least of the part around the anchor and of the leader to it.
+    const score = ([l, t]) => {
+      if (l < 4 || t < 4 || l + w > 676 || t + h > VH - 4) {
+        return Infinity;
+      }
+      if (!anchor) {
+        return 0;
+      }
+      const r = [l, t, l + w, t + h];
+      const ix = Math.max(0, Math.min(r[2], anchor[0] + 30) - Math.max(r[0], anchor[0] - 30));
+      const iy = Math.max(0, Math.min(r[3], anchor[1] + 26) - Math.max(r[1], anchor[1] - 26));
+      let sc = ix * iy;
+      for (let i = 1; i < 12; i++) {
+        const px = x + (anchor[0] - x) * i / 12;
+        const py = y + (anchor[1] - y) * i / 12;
+        if (px > r[0] && px < r[2] && py > r[1] && py < r[3]) {
+          sc += 200;
+        }
+      }
+      return sc;
+    };
+    const [left, top, bridge] = sides.reduce((best, s) => (score(s) < score(best) ? s : best)).map((v) => (Array.isArray(v) ? v.map(f) : f(v)));
+    return `<g class="tip${linked ? " linked" : ""}" data-for="${key}" visibility="hidden" aria-hidden="true">`
+      + `<rect x="${bridge[0]}" y="${bridge[1]}" width="${bridge[2]}" height="${bridge[3]}" fill="transparent"/>`
+      + `<rect class="tip-box" x="${left}" y="${top}" width="${w}" height="${h}" rx="6"/>`
+      + `<text class="tip-type" x="${f(left + 11)}" y="${f(top + 14)}" dominant-baseline="central">${type}</text>`
+      + `<text class="tip-value" x="${f(left + 11)}" y="${f(top + 30)}" dominant-baseline="central">${value}</text></g>`;
+  };
   const placeAll = (VH) => {
     for (let c = 1; c <= cols; c++) {
       ob(P(c, -0.85));
@@ -317,7 +359,7 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     }
   };
 
-  const render = (VH, title, desc) => {
+  const render = (VH, title, desc, id) => {
     const out = [];
     const add = (s) => out.push(s);
     add(poly([P(0, 18), P(W, 18), [P(W, 18)[0], P(W, 18)[1] + T], [P(0, 18)[0], P(0, 18)[1] + T]], "#D3D1C7", "#B4B2A9"));
@@ -362,23 +404,44 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
       const p = P(c, v);
       add(`<ellipse cx="${p[0]}" cy="${p[1]}" rx="5.2" ry="3.2" fill="#FFFFFF" stroke="#D85A30" stroke-width="1.8"/><ellipse cx="${p[0]}" cy="${p[1]}" rx="2.2" ry="1.3" fill="#2C2C2A"/>`);
     }
+    for (const [key, a] of Object.entries(anchors)) {
+      const item = partOf.get(a);
+      if (item) {
+        item.key = key;
+      }
+    }
     draws.sort((a, b) => a.d - b.d);
     for (const d of draws) {
-      add(d.s);
+      add(d.key ? `<g class="part" data-part="${d.key}">${d.s}</g>` : `<g class="part">${d.s}</g>`);
     }
-    for (const s of overlay) {
-      add(s);
-    }
+    add(`<g class="overlay">${overlay.join("")}</g>`);
     placeAll(VH);
-    for (const [name, x, y, cls, key] of pills) {
+    const tips = [];
+    const rules = [];
+    for (const [name, x, y, cls, key, tip] of pills) {
       const a = anchors[key];
-      if (a) {
-        add(`<line x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="#F6F4EE" stroke-width="4.4" stroke-linecap="round"/><line x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="${LEADER[cls] || "#534AB7"}" stroke-width="2" stroke-dasharray="6 3.5" stroke-linecap="round"/><circle cx="${a[0]}" cy="${a[1]}" r="3" fill="${LEADER[cls] || "#534AB7"}" stroke="#F6F4EE" stroke-width="1"/>`);
-      }
+      const linked = partOf.has(a);
       const w = name.length * 8 + 14;
-      add(`<g class="${cls}"><rect x="${f(x - w / 2)}" y="${y - 10}" width="${w}" height="20" rx="4" stroke-width="0.5"/><text class="th" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${name}</text></g>`);
+      const attrs = tip ? ` data-for="${key}" tabindex="0" role="img" aria-label="${name}: ${tip.join(", ")}"` : "";
+      let s = `<g class="pill ${cls}${linked ? " linked" : ""}"${attrs}>`;
+      if (a) {
+        s += `<line x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="#F6F4EE" stroke-width="4.4" stroke-linecap="round"/><line class="leader" x1="${a[0]}" y1="${a[1]}" x2="${x}" y2="${y}" stroke="${LEADER[cls] || "#534AB7"}" stroke-width="2" stroke-dasharray="6 3.5" stroke-linecap="round"/><circle cx="${a[0]}" cy="${a[1]}" r="3" fill="${LEADER[cls] || "#534AB7"}" stroke="#F6F4EE" stroke-width="1"/>`;
+      }
+      s += `<rect x="${f(x - w / 2)}" y="${f(y - 10)}" width="${w}" height="20" rx="4" stroke-width="0.5"/><text class="th" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${name}</text></g>`;
+      add(s);
+      if (tip) {
+        tips.push(tooltip(x, y, w, key, linked, tip, a, VH));
+        // CSS can't match one attribute value against another, so each tag gets its own rules.
+        const on = `#${id}:has(.pill[data-for="${key}"]:is(:hover, :focus-visible), .tip[data-for="${key}"]:hover)`;
+        rules.push(`${on} .tip[data-for="${key}"] { visibility: visible; }`);
+        if (linked) {
+          rules.push(`${on} .part[data-part="${key}"] { opacity: 1; filter: var(--part-glow); }`);
+        }
+      }
     }
-    return `<svg width="100%" viewBox="0 0 680 ${VH}" role="img" xmlns="http://www.w3.org/2000/svg"><title>${title}</title><desc>${desc}</desc>${out.join("")}</svg>`;
+    out.push(...tips);
+    const style = rules.length ? `<style>${rules.join("\n")}</style>` : "";
+    return `<svg id="${id}" width="100%" viewBox="0 0 680 ${VH}" role="group" xmlns="http://www.w3.org/2000/svg"><title>${title}</title><desc>${desc}</desc>${style}${out.join("")}</svg>`;
   };
 
   return { P, hole, tint, resistor, inductor, ecap, film, led, pot, transistor, jumper, box, wire, probe, pill, anchors, render, ROW };

@@ -1,3 +1,6 @@
+import os
+
+OUT = "out"
 P = "var(--p)"
 AM = "#BA7517"
 TE = "#1D9E75"
@@ -27,7 +30,7 @@ def cap_h(x1, x2, y, plus_left):
     m = (x1 + x2) / 2
     s = f'<path d="M{x1} {y} H{m - 5} M{m + 5} {y} H{x2}" fill="none" stroke="{P}" stroke-width="1.2"/>'
     s += f'<path d="M{m - 5} {y - 14} V{y + 14}" stroke="{P}" stroke-width="2"/>'
-    s += f'<path d="M{m + 5} {y - 14} Q{m + 1} {y} {m + 5} {y + 14}" fill="none" stroke="{P}" stroke-width="2"/>' if not plus_left else f'<path d="M{m + 5} {y - 14} Q{m + 1} {y} {m + 5} {y + 14}" fill="none" stroke="{P}" stroke-width="2"/>'
+    s += f'<path d="M{m + 5} {y - 14} Q{m + 1} {y} {m + 5} {y + 14}" fill="none" stroke="{P}" stroke-width="2"/>'
     px = m - 13 if plus_left else m + 9
     s += f'<text class="ts" x="{px}" y="{y - 10}" dominant-baseline="central">+</text>'
     return s
@@ -148,5 +151,8 @@ def fig5():
     return "".join(s)
 
 
-open("sch_ast4.svg", "w").write(fig4())
-open("sch_ast5.svg", "w").write(fig5())
+os.makedirs(OUT, exist_ok=True)
+with open(f"{OUT}/sch_ast4.svg", "w", encoding="utf-8") as fh:
+    fh.write(fig4())
+with open(f"{OUT}/sch_ast5.svg", "w", encoding="utf-8") as fh:
+    fh.write(fig5())
