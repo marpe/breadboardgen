@@ -86,4 +86,5 @@ def fig5():
     return "".join(s)
 
 
-save(__file__, {"sch_ast4.svg": fig4(), "sch_ast5.svg": fig5()})
+if __name__ == "__main__":
+    save(__file__, {"sch_ast4.svg": fig4(), "sch_ast5.svg": fig5()})
