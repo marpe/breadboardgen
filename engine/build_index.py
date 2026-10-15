@@ -23,7 +23,9 @@ a.card p { margin: 0; color: var(--muted); }
 
 
 def guide_ids():
-    return sorted(p.parent.name for p in (ROOT / "guides").glob("*/guide.py"))
+    # Only guides that still exist and have been built, so `./build.sh <one guide>` doesn't link to missing pages.
+    ids = (p.parent.name for p in (ROOT / "guides").glob("*/guide.py"))
+    return sorted(gid for gid in ids if (OUT / f"{gid}.html").exists())
 
 
 def card(gid):
