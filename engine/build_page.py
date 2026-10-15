@@ -120,7 +120,6 @@ def build(gid):
 """
     with open(OUT / f"{gid}.html", "w", encoding="utf-8") as fh:
         fh.write(head + body)
-    print(len(head + body))
 
 
 if __name__ == "__main__":
