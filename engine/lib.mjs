@@ -181,8 +181,14 @@ export function makeBoard({ cols = 19, S = 17, X0 = 330, Y0 = 150 } = {}) {
     obRect(b[0] - 7, b[1] - 16, 14, 18);
     obSeg(P(ca, va), b);
     obSeg(P(cc, vc2), b);
-    s += `<ellipse cx="${b[0]}" cy="${b[1]}" rx="${r + 1.5}" ry="${f((r + 1.5) * 0.5)}" fill="#A32D2D"/>`;
-    s += `<path d="M${f(b[0] - r)},${b[1]} L${f(b[0] - r)},${f(b[1] - 9)} A${r},${r} 0 0 1 ${f(b[0] + r)},${f(b[1] - 9)} L${f(b[0] + r)},${b[1]} Z" fill="#E24B4A" stroke="#791F1F" stroke-width="1.3"/>`;
+    // Flat on the cathode side (drawn on the right, like the cathode leg) through rim, body and dome, as in the 3D view.
+    const flat = b[0] + r * 0.7;
+    const rx = r + 1.5;
+    const ry = rx * 0.5;
+    const rimY = ry * Math.sqrt(1 - ((r * 0.7) / rx) ** 2);
+    const domeY = b[1] - 9 - r * Math.sqrt(1 - 0.7 ** 2);
+    s += `<path d="M${f(flat)},${f(b[1] - rimY)} A${rx},${ry} 0 1 0 ${f(flat)},${f(b[1] + rimY)} Z" fill="#A32D2D"/>`;
+    s += `<path d="M${f(b[0] - r)},${b[1]} L${f(b[0] - r)},${f(b[1] - 9)} A${r},${r} 0 0 1 ${f(flat)},${f(domeY)} L${f(flat)},${b[1]} Z" fill="#E24B4A" stroke="#791F1F" stroke-width="1.3"/>`;
     s += `<rect x="${f(b[0] - r + 1.5)}" y="${f(b[1] - 12)}" width="2.5" height="9" rx="1" fill="#F7C1C1"/>`;
     return part(depth(uc, vc) + 0.3, s, [b[0], f(b[1] - 18)]);
   };

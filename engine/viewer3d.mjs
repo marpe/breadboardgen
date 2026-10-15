@@ -181,13 +181,28 @@ function led({ anode, cathode }, at) {
   const bottom = 1.1;
   const r = 0.55;
   const lens = mat("#E24B4A", { roughness: 0.15, emissive: "#7A1414", transparent: true, opacity: 0.92 });
-  const flange = mesh(new THREE.CylinderGeometry(r + 0.08, r + 0.08, 0.14, 32), lens);
-  flange.position.copy(C).setY(bottom + 0.07);
-  const body = mesh(new THREE.CylinderGeometry(r, r, 0.8, 32), lens);
-  body.position.copy(C).setY(bottom + 0.54);
-  const dome = mesh(new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), lens);
-  dome.position.copy(C).setY(bottom + 0.94);
-  group.add(flange, body, dome);
+  // Built with +x towards the cathode, then turned to face it. A real LED has a flat on its rim on the cathode side;
+  // here the flat runs through rim, body and dome, since a rim flat alone is hidden by the dome at board scale.
+  const lamp = new THREE.Group();
+  lamp.position.copy(C).setY(bottom);
+  lamp.rotation.y = -Math.atan2(dir.z, dir.x);
+  const flat = r * 0.7;
+  const flatten = (geometry) => {
+    const position = geometry.attributes.position;
+    for (let i = 0; i < position.count; i++) {
+      position.setX(i, Math.min(position.getX(i), flat));
+    }
+    geometry.computeVertexNormals();
+    return geometry;
+  };
+  const flange = mesh(flatten(new THREE.CylinderGeometry(r + 0.08, r + 0.08, 0.14, 64)), lens);
+  flange.position.y = 0.07;
+  const body = mesh(flatten(new THREE.CylinderGeometry(r, r, 0.8, 64)), lens);
+  body.position.y = 0.54;
+  const dome = mesh(flatten(new THREE.SphereGeometry(r, 64, 16, 0, Math.PI * 2, 0, Math.PI / 2)), lens);
+  dome.position.y = 0.94;
+  lamp.add(flange, body, dome);
+  group.add(lamp);
   group.add(leg(A, C.clone().addScaledVector(dir, -0.2).setY(bottom)), leg(K, C.clone().addScaledVector(dir, 0.2).setY(bottom)));
   return group;
 }

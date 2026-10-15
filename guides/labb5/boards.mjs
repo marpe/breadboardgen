@@ -3,7 +3,7 @@ import { makeBoard, ROW as R, AMBER, TEAL, RED, BLACK } from "../../engine/lib.m
 import { resistor, filmCap, elcoCap, trimmer, transistor, plain } from "../../engine/markings.mjs";
 
 const IN_NODE = plain("Input node", "CH1 probe, generator signal");
-const LED_MARK = "Long leg is the anode (+)";
+const LED_MARK = "Long leg is the anode (+), flat rim edge the cathode (−)";
 
 const ledBoard = () => {
   const b = makeBoard({ cols: 12, S: 20, X0: 360, Y0: 150 });
