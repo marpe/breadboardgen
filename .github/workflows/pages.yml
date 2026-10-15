@@ -1,4 +1,4 @@
-# Builds labb5.html and publishes it to GitHub Pages as the site's index page.
+# Builds every guide plus the index page and publishes them to GitHub Pages.
 name: Deploy to GitHub Pages
 
 on:
@@ -32,7 +32,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir _site
-          cp out/labb5.html _site/index.html
+          cp out/*.html _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

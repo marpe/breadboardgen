@@ -1,4 +1,5 @@
 """Schematic drawing helpers in the house style: 680-wide viewBox, var(--p) strokes, page CSS text classes."""
+from pathlib import Path
 
 P = "var(--p)"
 AM = "#BA7517"
@@ -64,3 +65,12 @@ def led_down(x, y):
     s += f'<path d="M{x - 13} {y + 22} H{x + 13}" stroke="#A32D2D" stroke-width="2"/>'
     s += f'<g stroke="#E24B4A" stroke-width="1.2" fill="none" stroke-linecap="round"><path d="M{x + 14} {y + 8} l12 -10 M{x + 14} {y + 15} l12 -10 M{x + 26} {y - 2} l-6 1 M{x + 26} {y - 2} l-1 6 M{x + 26} {y + 5} l-6 1 M{x + 26} {y + 5} l-1 6"/></g>'
     return s
+
+
+def save(guide_file, svgs):
+    """Writes {file name: svg} to out/<guide>/, where <guide> is the folder of guide_file (pass __file__)."""
+    out = Path("out") / Path(guide_file).parent.name
+    out.mkdir(parents=True, exist_ok=True)
+    for name, svg in svgs.items():
+        with open(out / name, "w", encoding="utf-8") as fh:
+            fh.write(svg)

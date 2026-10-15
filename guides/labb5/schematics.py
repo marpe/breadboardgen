@@ -1,9 +1,5 @@
 """Generated Labb 5 schematics: python -m guides.labb5.schematics -> out/labb5/sch_ast4.svg, sch_ast5.svg"""
-from pathlib import Path
-
-from engine.schlib import AM, ARROW, P, TE, cap_h, dot, ground, led_down, npn, probe_box, res_v, t
-
-OUT = Path("out/labb5")
+from engine.schlib import AM, ARROW, P, TE, cap_h, dot, ground, led_down, npn, probe_box, res_v, save, t
 
 
 def fig4():
@@ -90,7 +86,4 @@ def fig5():
     return "".join(s)
 
 
-OUT.mkdir(parents=True, exist_ok=True)
-for name, svg in (("sch_ast4.svg", fig4()), ("sch_ast5.svg", fig5())):
-    with open(OUT / name, "w", encoding="utf-8") as fh:
-        fh.write(svg)
+save(__file__, {"sch_ast4.svg": fig4(), "sch_ast5.svg": fig5()})
