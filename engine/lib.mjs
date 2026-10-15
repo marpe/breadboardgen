@@ -2,6 +2,11 @@ import { bands4 } from "./markings.mjs";
 
 const LEADER = { "c-purple": "#534AB7", "c-amber": "#BA7517", "c-teal": "#0F6E56", "c-gray": "#5F5E5A" };
 export const ROW = { a: 4, b: 5, c: 6, d: 7, e: 8, f: 10, g: 11, h: 12, i: 13, j: 14, tp: 1, tn: 2, bp: 16, bn: 17 };
+// Lead and probe colours shared by every guide's boards.
+export const AMBER = "#BA7517";
+export const TEAL = "#1D9E75";
+export const RED = "#E24B4A";
+export const BLACK = "#2C2C2A";
 
 const f = (n) => Math.round(n * 10) / 10;
 const pt = (p) => `${p[0]},${p[1]}`;

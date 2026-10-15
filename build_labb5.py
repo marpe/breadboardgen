@@ -9,7 +9,7 @@ def read(path):
 
 def view3d(key):
     # Model JSON sits in a data script; "</" is escaped so the JSON can't close the script element early.
-    model = read(f"{OUT}/{key}.3d.json").replace("</", "<\\/")
+    model = read(f"{OUT}/labb5/{key}.3d.json").replace("</", "<\\/")
     return (f'<div class="drawing view-3d"><div class="stage" data-model="model-{key}"></div>'
             f'<p class="note">Drag to orbit, right-drag to pan, scroll to zoom. On touch screens, swipe sideways to orbit, or use two fingers to tilt and zoom.</p>'
             f'<script type="application/json" id="model-{key}">{model}</script></div>')
@@ -71,7 +71,7 @@ def section(sid, eyebrow, title, lede, sch, bb, rows, card_items, sch_cap, bb_ca
     return f"""<section class="circuit" id="{sid}">
 <header><div class="eyebrow">{eyebrow}</div><h2>{title}</h2><p>{lede}</p></header>
 <figure>{caption("SCHEMATIC", sch_cap)}<div class="drawing">{read(sch)}</div></figure>
-<figure>{caption("BREADBOARD", bb_cap)}<div class="drawing view-iso">{read(f"{OUT}/{bb}.svg")}</div>{view3d(bb)}</figure>
+<figure>{caption("BREADBOARD", bb_cap)}<div class="drawing view-iso">{read(f"{OUT}/labb5/{bb}.svg")}</div>{view3d(bb)}</figure>
 {table(rows)}
 {cards(card_items)}
 </section>

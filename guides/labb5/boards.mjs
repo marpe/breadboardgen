@@ -1,29 +1,6 @@
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
-import { makeBoard, ROW as R } from "./engine/lib.mjs";
-import { resistor, filmCap, elcoCap, trimmer, transistor, plain } from "./engine/markings.mjs";
-
-const AMBER = "#BA7517";
-const TEAL = "#1D9E75";
-const RED = "#E24B4A";
-const BLACK = "#2C2C2A";
-const OUT = "out";
-const pillsFile = "pills.json";
-const placed = existsSync(pillsFile) ? JSON.parse(readFileSync(pillsFile, "utf8")) : {};
-mkdirSync(OUT, { recursive: true });
-
-const finish = (key, b, { names, info = {}, pinned = {}, VH, title, desc }) => {
-  const spec = { ...pinned, ...placed[key] };
-  const report = {};
-  for (const [name, anchorKey, cls] of names) {
-    const a = b.anchors[anchorKey];
-    report[anchorKey] = a;
-    const pos = spec[anchorKey] || [null, null];
-    b.pill(name, pos[0], pos[1], cls || "c-purple", anchorKey, info[anchorKey]);
-  }
-  writeFileSync(`${OUT}/${key}.svg`, b.render(VH, title, desc, `bb-${key}`));
-  writeFileSync(`${OUT}/${key}.3d.json`, JSON.stringify(b.model3d()));
-  console.log(key, JSON.stringify(report));
-};
+// Labb 5 boards. Each builder returns the board plus its tags; engine/boards.mjs places the tags and writes the files.
+import { makeBoard, ROW as R, AMBER, TEAL, RED, BLACK } from "../../engine/lib.mjs";
+import { resistor, filmCap, elcoCap, trimmer, transistor, plain } from "../../engine/markings.mjs";
 
 const IN_NODE = plain("Input node", "CH1 probe, generator signal");
 const LED_MARK = "Long leg is the anode (+)";
@@ -40,7 +17,8 @@ const ledBoard = () => {
   b.probe([545, 110], 5, R.e, RED);
   b.probe([605, 110], 9, R.tn, BLACK);
   b.anchors.node = b.node(5, 6.5);
-  finish("led", b, {
+  return {
+    b,
     names: [["D1", "D1"], ["R", "R"], ["LED−R node", "node", "c-gray"]],
     info: {
       D1: plain("LED", "2.5 V at 20 mA", LED_MARK),
@@ -50,10 +28,10 @@ const ledBoard = () => {
     VH: 500,
     title: "LED indicator on a breadboard",
     desc: "LED D1 from the +12 V rail into column 5, resistor R from column 5 to the ground rail, multimeter across R.",
-  });
+  };
 };
 
-const filter = (key, kind) => {
+const filter = (kind) => {
   const b = makeBoard({ cols: 12, S: 21, X0: 377, Y0: 150 });
   b.box(30, 40, 170, 52, "Signal generator", [kind === "rl" ? "Square wave, Uin" : "Square wave, 5 V"]);
   b.wire([200, 58], 3, R.e, AMBER);
@@ -87,13 +65,14 @@ const filter = (key, kind) => {
   b.anchors.Uin = b.node(3, 8.3);
   b.anchors.Uut = b.node(8, 8.3);
   names.push(["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"]);
-  finish(key, b, {
+  return {
+    b,
     names,
     info: { ...info, Uin: IN_NODE },
     VH: 530,
     title: kind === "rl" ? "RL circuit on a breadboard" : "RC circuit on a breadboard",
     desc: kind === "rl" ? "Inductor L1 from the Uin strip to the Uut strip, R1 from Uut to ground, generator and two scope probes." : "Resistor R from the Uin strip to the Uut strip, capacitor C from Uut to ground, generator and two scope probes.",
-  });
+  };
 };
 const ampBoard = () => {
   const b = makeBoard();
@@ -122,7 +101,8 @@ const ampBoard = () => {
   b.probe([575, 110], 16, R.a, TEAL, [15, R.tn]);
   b.anchors.Uin = b.node(8, 8.3);
   b.anchors.Uut = b.node(16, 6);
-  finish("amp", b, {
+  return {
+    b,
     names: [["R1", "R1"], ["R3", "R3"], ["C1", "C1"], ["C2", "C2"], ["Q3", "Q3"], ["R2", "R2"], ["R4", "R4"], ["C3", "C3"],
       ["Uin", "Uin", "c-amber"], ["Uut", "Uut", "c-teal"], ["GND bridge", "bridge", "c-gray"]],
     info: {
@@ -145,10 +125,10 @@ const ampBoard = () => {
     VH: 510,
     title: "Common emitter amplifier on a breadboard",
     desc: "Breadboard with components R1, R2, R3, R4, C1, C2, C3 and Q3, plus supply, signal generator and scope probe connections.",
-  });
+  };
 };
 
-const astable = (key, variable) => {
+const astable = (variable) => {
   const b = makeBoard({ cols: 21, S: 17, X0: 310, Y0: 165 });
   b.box(20, 40, 160, 52, "V1 bench supply", ["+9 V / 0 V (example)"]);
   b.wire([180, 58], 2, R.tp, RED);
@@ -205,18 +185,21 @@ const astable = (key, variable) => {
   }
   b.probe([540, 110], 7, R.d, AMBER, [8, R.tn]);
   b.probe([610, 110], 14, R.d, TEAL, [13, R.tn]);
-  finish(key, b, {
+  return {
+    b,
     names,
     info,
     VH: 560,
     title: variable ? "Variable astable multivibrator on a breadboard" : "Astable multivibrator on a breadboard",
     desc: variable ? "Two transistors UT1 and UT2 with cross-coupled capacitors, LEDs in the collector lines, RP1 setting the base resistances, scope probes on both collectors." : "Two transistors Q1 and Q2 with cross-coupled capacitors C, collector resistors R1, base resistors R2, scope probes on both collectors.",
-  });
+  };
 };
 
-ledBoard();
-filter("rl", "rl");
-filter("rc", "rc");
-ampBoard();
-astable("ast4", false);
-astable("ast5", true);
+export default {
+  led: ledBoard,
+  rl: () => filter("rl"),
+  rc: () => filter("rc"),
+  amp: ampBoard,
+  ast4: () => astable(false),
+  ast5: () => astable(true),
+};
