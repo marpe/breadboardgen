@@ -16,6 +16,10 @@ a.card { color: inherit; text-decoration: none; overflow-wrap: break-word; touch
 a.card:hover, a.card:focus-visible { border-color: var(--ink); outline: none; }
 a.card h3 { text-wrap: balance; }
 a.card p { margin: 0; color: var(--muted); }
+/* page-head.html strips card chrome on phones; the index cards are links, so they keep it as their tap and focus cue. */
+@media (max-width: 560px) {
+  a.card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+}
 </style>
 """
 
