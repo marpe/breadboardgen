@@ -102,7 +102,7 @@ The runner:
 
 1. imports `guides.<id>.guide`, with the repo root on `sys.path`;
 2. resolves each section's schematic by name: `out/<id>/<name>` (generated) or `guides/<id>/schematics/<name>` (hand-written). If the name exists in both places or in neither, it exits with an error naming the file;
-3. renders the sections with the same markup as now;
+3. renders the sections with the same markup as now. If a section's `id` has no built board (`out/<id>/<key>.svg` is missing), it exits with an error that names `guides/<id>/boards.mjs`;
 4. builds the nav from each section's `id` and `nav` in section order, with `--rows: 3 + len(sections)`;
 5. writes `out/<id>.html`, with `page-head.html`, the import map, the inlined `viewer3d.mjs` and the inlined `page.mjs`.
 
@@ -118,7 +118,9 @@ These move unchanged from `sch_ast.py`: `npn`, `res_v`, `cap_h`, `dot`, `t`, `gr
 
 Usage: `python -m engine.build_index`.
 
-For every `guides/*/guide.py`, sorted by folder name, it renders a card from `eyebrow`, `h1` and `lede` that links to `<id>.html`. The page uses `page-head.html` and its existing `card` / `cols` classes, so it gets both themes and the responsive rules for free. It needs no new CSS beyond what the cards already have. If a link style is missing, it is added to `page-head.html` for both themes. The `<title>` is "Breadboard Guides".
+For every `guides/*/guide.py`, sorted by folder name, it renders a card from `eyebrow`, `h1` and `lede` that links to `<id>.html`. The page uses `page-head.html` and its existing `card` / `cols` classes, so it gets both themes and the responsive rules for free. Index-only CSS goes in a small `<style>` emitted by `build_index.py`, not in `page-head.html`, because `page-head.html` is inlined into every guide page and editing it would break the byte-identical check. That CSS covers the card-link styles and drops the wide-screen sidebar column, which only exists for the circuit nav. It uses only the existing theme variables, so both themes keep working. The `<title>` is "Breadboard Guides".
+
+Guide modules must be side-effect free (no file IO on import), since the index imports every `guide.py`.
 
 ## Build script (`build.sh`)
 
