@@ -12,7 +12,7 @@ Static generator for breadboard guides: one page per folder in `guides/` (`out/<
 ./build.sh                              # every guide + index -> out/ (git-ignored)
 ./build.sh labb5                        # one guide + index
 node engine/boards.mjs labb5            # boards -> out/labb5/<key>.svg (fallback drawing) and out/labb5/<key>.3d.json (3D model)
-python -m guides.labb5.schematics       # generated schematics -> out/labb5/sch_ast{4,5}.svg
+python -m guides.labb5.schematics       # generated schematics -> out/labb5/sch/sch_ast{4,5}.svg
 python -m engine.build_page labb5       # assemble out/labb5.html (needs the steps above first)
 python -m engine.build_index            # out/index.html
 python prev.py out/labb5/rl.svg rl.png  # PNG preview of an SVG, needs `pip install cairosvg`
@@ -31,7 +31,7 @@ To test in a browser, serve `out/` over HTTP (`python -m http.server --directory
 A guide is a folder `guides/<id>/` (`<id>` must be a Python identifier; it's imported as `guides.<id>.guide`) with `boards.mjs`, `guide.py`, `schematics/`, and optionally `schematics.py` and `pills.json`. README's "Adding a guide" has the contract.
 
 1. `engine/boards.mjs <id>` runs each builder in the default export of `guides/<id>/boards.mjs`. Builders make a board with `makeBoard()` from `engine/lib.mjs` and return `{ b, names, info, pinned, VH, title, desc }`; the runner places the tags and writes `out/<id>/<key>.svg` and `out/<id>/<key>.3d.json`. Both come from the same calls, so the drawing and the 3D view always agree.
-2. Optional `guides/<id>/schematics.py` draws schematics with `engine/schlib.py` and writes them to `out/<id>/` with `save(__file__, {...})`. Hand-written schematics live in `guides/<id>/schematics/`. A section's `schematic` name must exist in exactly one of the two places, or `build_page` stops with an error.
+2. Optional `guides/<id>/schematics.py` draws schematics with `engine/schlib.py` and writes them to `out/<id>/sch/` with `save(__file__, {...})` (their own folder, so a schematic name can never collide with a board). Hand-written schematics live in `guides/<id>/schematics/`. A section's `schematic` name must exist in exactly one of the two places, or `build_page` stops with an error.
 3. `engine/build_page.py <id>` concatenates `engine/page-head.html` (fonts, CSS; each build script adds its own `<title>`) with the body built from `GUIDE` in `guides/<id>/guide.py`. All page text lives in `guide.py`: the `section(...)` calls carry ledes, node tables and cards, using helpers from `engine/page_kit.py`. A section's `id` is its board key and its nav anchor; its `nav` tuple is the nav label. Each breadboard figure holds `.view-iso` (the SVG) and `.view-3d` (a stage plus that board's model JSON). The page inlines `viewer3d.mjs` as a `text/plain` script and `page.mjs` as the page's module script.
 4. `engine/build_index.py` imports every `guides/*/guide.py` (so guide modules must be side-effect free) and writes `out/index.html`, one card per guide. Its index-only CSS is inline in `build_index.py`, since anything added to `page-head.html` lands in every guide page.
 

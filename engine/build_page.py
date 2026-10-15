@@ -38,11 +38,11 @@ def caption(label, text):
 
 
 def schematic(gid, name):
-    places = [OUT / gid / name, ROOT / "guides" / gid / "schematics" / name]
+    places = [OUT / gid / "sch" / name, ROOT / "guides" / gid / "schematics" / name]
     found = [p for p in places if p.exists()]
     if len(found) != 1:
         where = "both" if found else "neither"
-        fail(f"schematic {name} must be in exactly one of out/{gid}/ (generated) or guides/{gid}/schematics/ (hand-written); found in {where}")
+        fail(f"schematic {name} must be in exactly one of out/{gid}/sch/ (generated) or guides/{gid}/schematics/ (hand-written); found in {where}")
     return read(found[0])
 
 

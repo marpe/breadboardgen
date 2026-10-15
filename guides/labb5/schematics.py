@@ -1,4 +1,4 @@
-"""Generated Labb 5 schematics: python -m guides.labb5.schematics -> out/labb5/sch_ast4.svg, sch_ast5.svg"""
+"""Generated Labb 5 schematics: python -m guides.labb5.schematics -> out/labb5/sch/sch_ast4.svg, sch_ast5.svg"""
 from engine.schlib import AM, ARROW, P, TE, cap_h, dot, ground, led_down, npn, probe_box, res_v, save, t
 
 

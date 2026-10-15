@@ -68,8 +68,9 @@ def led_down(x, y):
 
 
 def save(guide_file, svgs):
-    """Writes {file name: svg} to out/<guide>/, where <guide> is the folder of guide_file (pass __file__)."""
-    out = Path("out") / Path(guide_file).parent.name
+    """Writes {file name: svg} to out/<guide>/sch/, where <guide> is the folder of guide_file (pass __file__).
+    Their own folder keeps generated schematics apart from the boards in out/<guide>/."""
+    out = Path(__file__).parent.parent / "out" / Path(guide_file).parent.name / "sch"
     out.mkdir(parents=True, exist_ok=True)
     for name, svg in svgs.items():
         with open(out / name, "w", encoding="utf-8") as fh:

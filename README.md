@@ -31,7 +31,7 @@ Create `guides/<id>/`. `<id>` must be a valid Python identifier, e.g. `labb6`, b
 - Optional `schematics.py`: draws schematics with `engine.schlib` and writes them with `save(__file__, {name: svg})`.
 - Optional `pills.json`: hand-placed tag positions.
 
-A section's `schematic` file name must exist in exactly one of `guides/<id>/schematics/` or the generated output. Then run `./build.sh <id>`.
+A section's `schematic` file name must exist in exactly one of `guides/<id>/schematics/` or the generated output (`out/<id>/sch/`). Then run `./build.sh <id>`.
 
 ## Files
 
