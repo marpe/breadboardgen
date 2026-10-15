@@ -1,5 +1,5 @@
 // @env browser
-// Builds 3D breadboards from the board models written by circuits.mjs (out/<key>.3d.json). One mountBoard() per board.
+// Builds 3D breadboards from the board models written by engine/boards.mjs (out/<guide>/<key>.3d.json). One mountBoard() per board.
 // Units are hole pitches (2.54 mm): x = column, z = row position v (as in ROW), y = up from the board's top face.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
