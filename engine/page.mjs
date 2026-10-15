@@ -1,6 +1,6 @@
 // @env browser
-// Page behaviour for labb5.html, inlined by build_labb5.py: starts the 3D breadboards and links each schematic to its
-// breadboard, so hovering a part's label in one highlights the part in the other.
+// Page behaviour for guide pages, inlined by engine/build_page.py: starts the 3D breadboards and links each schematic
+// to its breadboard, so hovering a part's label in one highlights the part in the other.
 
 const root = document.documentElement;
 

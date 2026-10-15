@@ -4,31 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Static generator for `out/labb5.html`, a single-page guide to the TNE108 Labb 5 circuits. Each circuit gets a schematic, a breadboard (3D with three.js, with an isometric SVG drawing as fallback), a node table and info cards. Plain Node (ESM `.mjs`, no dependencies, no `package.json`) and Python 3 standard library. There are no tests and no linter.
+Static generator for breadboard guides: one page per folder in `guides/` (`out/<guide>.html`) plus `out/index.html` listing them. The engine lives in `engine/`; the first guide, `guides/labb5/`, covers the TNE108 Labb 5 circuits. Each circuit gets a schematic, a breadboard (3D with three.js, with an isometric SVG drawing as fallback), a node table and info cards. Plain Node (ESM `.mjs`, no dependencies, no `package.json`) and Python 3 standard library. There are no tests and no linter.
 
 ## Commands
 
 ```
-./build.sh                       # full build -> out/ (git-ignored)
-node circuits.mjs                # breadboards -> out/<key>.svg (fallback drawing) and out/<key>.3d.json (3D model)
-python sch_ast.py                # astable schematics -> out/sch_ast{4,5}.svg
-python build_labb5.py            # assemble out/labb5.html (needs the two steps above first)
-python prev.py out/rl.svg rl.png # PNG preview of an SVG, needs `pip install cairosvg`
+./build.sh                              # every guide + index -> out/ (git-ignored)
+./build.sh labb5                        # one guide + index
+node engine/boards.mjs labb5            # boards -> out/labb5/<key>.svg (fallback drawing) and out/labb5/<key>.3d.json (3D model)
+python -m guides.labb5.schematics       # generated schematics -> out/labb5/sch_ast{4,5}.svg
+python -m engine.build_page labb5       # assemble out/labb5.html (needs the steps above first)
+python -m engine.build_index            # out/index.html
+python prev.py out/labb5/rl.svg rl.png  # PNG preview of an SVG, needs `pip install cairosvg`
 ```
 
-Run everything from the repo root; scripts use relative paths. `build.sh` uses `$PYTHON`, else `python3`, else `python`.
+Run everything from the repo root; scripts use relative paths and `python -m` module names. `build.sh` uses `$PYTHON`, else `python3`, else `python`. It validates every guide name before building any.
 
-`node circuits.mjs` prints each board's anchor coordinates as JSON. Use them when pinning tags.
+`node engine/boards.mjs <guide>` prints each board's anchor coordinates as JSON. Use them when pinning tags.
 
-To check a refactor, build before and after and `cmp` the files in `out/`. Unchanged boards should be byte-identical.
+To check a refactor, build before and after and `cmp` the files in `out/`. Unchanged boards should be byte-identical. `page-head.html`, `viewer3d.mjs` and `page.mjs` are inlined into every guide page, so any edit to them changes every page's bytes.
 
 To test in a browser, serve `out/` over HTTP (`python -m http.server --directory out`); browser automation can't open `file://`. Chrome caches the page, so add a query string (`labb5.html?v=2`) after rebuilding.
 
 ## Pipeline
 
-1. `circuits.mjs` builds each breadboard with `makeBoard()` from `lib.mjs` and writes `out/<key>.svg` and `out/<key>.3d.json`. Both come from the same calls, so the drawing and the 3D view always agree.
-2. `sch_ast.py` draws the two astable schematics. The other schematics are hand-written files in `schematics/`.
-3. `build_labb5.py` concatenates `page-head.html` (fonts, CSS; each build script adds its own `<title>`) with the generated body. All page text lives here: the `section(...)` calls carry ledes, node tables and cards. Section ids (`led`, `rl`, `rc`, `amp`, `ast4`, `ast5`) match the board keys and the `nav_items` anchors. Each breadboard figure holds `.view-iso` (the SVG) and `.view-3d` (a stage plus that board's model JSON). The page inlines `viewer3d.mjs` as a `text/plain` script and `page.mjs` as the page's module script.
+A guide is a folder `guides/<id>/` (`<id>` must be a Python identifier; it's imported as `guides.<id>.guide`) with `boards.mjs`, `guide.py`, `schematics/`, and optionally `schematics.py` and `pills.json`. README's "Adding a guide" has the contract.
+
+1. `engine/boards.mjs <id>` runs each builder in the default export of `guides/<id>/boards.mjs`. Builders make a board with `makeBoard()` from `engine/lib.mjs` and return `{ b, names, info, pinned, VH, title, desc }`; the runner places the tags and writes `out/<id>/<key>.svg` and `out/<id>/<key>.3d.json`. Both come from the same calls, so the drawing and the 3D view always agree.
+2. Optional `guides/<id>/schematics.py` draws schematics with `engine/schlib.py` and writes them to `out/<id>/` with `save(__file__, {...})`. Hand-written schematics live in `guides/<id>/schematics/`. A section's `schematic` name must exist in exactly one of the two places, or `build_page` stops with an error.
+3. `engine/build_page.py <id>` concatenates `engine/page-head.html` (fonts, CSS; each build script adds its own `<title>`) with the body built from `GUIDE` in `guides/<id>/guide.py`. All page text lives in `guide.py`: the `section(...)` calls carry ledes, node tables and cards, using helpers from `engine/page_kit.py`. A section's `id` is its board key and its nav anchor; its `nav` tuple is the nav label. Each breadboard figure holds `.view-iso` (the SVG) and `.view-3d` (a stage plus that board's model JSON). The page inlines `viewer3d.mjs` as a `text/plain` script and `page.mjs` as the page's module script.
+4. `engine/build_index.py` imports every `guides/*/guide.py` (so guide modules must be side-effect free) and writes `out/index.html`, one card per guide. Its index-only CSS is inline in `build_index.py`, since anything added to `page-head.html` lands in every guide page.
 
 ## Page behaviour (page.mjs)
 
@@ -55,7 +60,7 @@ The page must work down to 320 px with no sideways page scroll.
   - figures, cards and tables lose their card chrome (border, background, padding);
   - the stage is 4:3 with no `min-height`;
   - the nav becomes a single horizontally scrolling row;
-  - node tables stack, with each cell labelled from `data-label` (`TABLE_HEADS` in `build_labb5.py`).
+  - node tables stack, with each cell labelled from `data-label` (`TABLE_HEADS` in `engine/page_kit.py`).
 - `.stage` needs `width: 100%`. A grid item with `aspect-ratio` doesn't stretch; its width would follow `min-height` and overflow the card.
 
 ## SVGs depend on page CSS
@@ -79,11 +84,11 @@ When you add a class or variable to an SVG, define it in `page-head.html` for bo
 
 ## Tags (pills)
 
-`finish(key, b, { names, info, pinned, VH, title, desc })` in `circuits.mjs`:
+Each builder in `guides/<id>/boards.mjs` returns `{ b, names, info, pinned, VH, title, desc }`; `finish()` in `engine/boards.mjs` places the tags:
 - `names` is a list of `[label, anchorKey, cssClass?]` entries. Labels can repeat (e.g. two `R1` tags on different anchors); anchor keys must be unique.
-- `info[anchorKey]` is the hover tooltip, built with the helpers in `markings.mjs`: `resistor(type, ohms, note?)`, `filmCap`, `elcoCap`, `trimmer`, `transistor`, `plain(type, value, mark?)`. They return `{ type, value, bands? | mark? }`. The helpers derive the value text and the marking (4-band colour code, EIA code such as "105") from the number. Take values from the schematics and the cards in `build_labb5.py`; they must agree. A tag without `info` is not focusable and gets no tooltip.
+- `info[anchorKey]` is the hover tooltip, built with the helpers in `markings.mjs`: `resistor(type, ohms, note?)`, `filmCap`, `elcoCap`, `trimmer`, `transistor`, `plain(type, value, mark?)`. They return `{ type, value, bands? | mark? }`. The helpers derive the value text and the marking (4-band colour code, EIA code such as "105") from the number. Take values from the schematics and the cards in `guide.py`; they must agree. A tag without `info` is not focusable and gets no tooltip.
 - Pass the same resistance to the drawn part, e.g. `b.resistor(c1, v1, c2, v2, ohms.R1)`, so the board shows the same bands as the tooltip. Each board keeps its values in one place (e.g. an `ohms` object) for that reason. Without a value, the resistor draws placeholder bands.
-- Position precedence in the SVG: `pills.json[key][anchorKey]` > `pinned` > auto-placement. Only the amplifier board pins its tags in code.
+- Position precedence in the SVG: `guides/<id>/pills.json[key][anchorKey]` > `pinned` > auto-placement. Only the Labb 5 amplifier board pins its tags in code.
 
 ## SVG tooltips and highlight (no script)
 
@@ -109,3 +114,5 @@ When you add a class or variable to an SVG, define it in `page-head.html` for bo
 
 - Always open files in Python with `encoding="utf-8"`. The content has `Ω`, `µ` and `−`, and the Windows default (cp1252) crashes on them.
 - Line endings are LF (`.gitattributes`). `build.sh` breaks under CRLF.
+- Guide folder names must be valid Python identifiers (`labb6`, not `labb-6`); `build.sh` refuses others.
+- Index-only CSS goes in `engine/build_index.py`, not `page-head.html`, which is inlined into every guide page.
