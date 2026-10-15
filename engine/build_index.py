@@ -1,9 +1,7 @@
 """Index page: python -m engine.build_index
 
 Writes out/index.html with one card per guide in guides/, linking to <guide>.html."""
-import importlib
-
-from engine.build_page import ENGINE, OUT, ROOT, read
+from engine.build_page import ENGINE, OUT, ROOT, load_guide, read
 
 # Index-only CSS. page-head.html is inlined into every guide page, so index styles stay out of it.
 STYLE = """<style>
@@ -29,7 +27,7 @@ def guide_ids():
 
 
 def card(gid):
-    g = importlib.import_module(f"guides.{gid}.guide").GUIDE
+    g = load_guide(gid)
     return (f'<a class="card" href="{gid}.html"><div class="eyebrow">{g["eyebrow"]}</div>'
             f'<h3>{g["h1"]}</h3><p>{g["lede"]}</p></a>')
 

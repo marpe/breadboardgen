@@ -69,10 +69,19 @@ def render_section(gid, s):
 """
 
 
+GUIDE_KEYS = ("title", "eyebrow", "h1", "lede", "sections")
+
+
 def load_guide(gid):
     if not (ROOT / "guides" / gid / "guide.py").exists():
         fail(f"no guide guides/{gid}/guide.py")
-    return importlib.import_module(f"guides.{gid}.guide").GUIDE
+    guide = getattr(importlib.import_module(f"guides.{gid}.guide"), "GUIDE", None)
+    if not isinstance(guide, dict):
+        fail(f"guides/{gid}/guide.py must define a GUIDE dict")
+    missing = [k for k in GUIDE_KEYS if k not in guide]
+    if missing:
+        fail(f"GUIDE in guides/{gid}/guide.py is missing {', '.join(missing)}")
+    return guide
 
 
 def build(gid):
