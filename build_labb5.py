@@ -22,7 +22,7 @@ def caption(label, text):
     return f'<figcaption><b>{label}</b> <span>{text}</span>{button}</figcaption>'
 
 
-head = read("page-head.html") + "<title>Labb 5 Breadboard Guide</title>\n"
+head = read("engine/page-head.html") + "<title>Labb 5 Breadboard Guide</title>\n"
 
 legend = """<section class="card" aria-label="How to read the drawings">
 <h3>How to read the drawings</h3>
@@ -285,10 +285,10 @@ body = f"""<main>
 </main>
 <script type="importmap">{{"imports": {{"three": "{THREE}/build/three.module.js", "three/addons/": "{THREE}/examples/jsm/"}}}}</script>
 <script type="text/plain" id="viewer-src">
-{read("viewer3d.mjs")}
+{read("engine/viewer3d.mjs")}
 </script>
 <script type="module">
-{read("page.mjs")}
+{read("engine/page.mjs")}
 </script>
 """
 with open(f"{OUT}/labb5.html", "w", encoding="utf-8") as fh:

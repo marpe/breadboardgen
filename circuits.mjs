@@ -1,6 +1,6 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
-import { makeBoard, ROW as R } from "./lib.mjs";
-import { resistor, filmCap, elcoCap, trimmer, transistor, plain } from "./markings.mjs";
+import { makeBoard, ROW as R } from "./engine/lib.mjs";
+import { resistor, filmCap, elcoCap, trimmer, transistor, plain } from "./engine/markings.mjs";
 
 const AMBER = "#BA7517";
 const TEAL = "#1D9E75";
