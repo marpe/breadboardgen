@@ -76,7 +76,7 @@ The guide file imports from the engine with relative paths (`../../engine/lib.mj
 
 Usage: `python -m engine.build_page <guide>`, run from the repo root.
 
-`page_kit.py` holds the content helpers that `build_labb5.py` defines today: `node()`, `c()`, `table()` with `TABLE_HEADS`, `cards()`, `caption()`, `view3d()`, the default `LEGEND`, and a new `section()`. `section()` now takes keyword arguments and returns a dict, so the runner can derive the nav from it:
+`page_kit.py` holds the content helpers that `build_labb5.py` defines today: `node()`, `c()`, `table()` with `TABLE_HEADS`, `cards()`, the default `LEGEND`, and a new `section()`. The rendering helpers `caption()` and `view3d()` read files, so they live in `build_page.py` with the rest of the IO. `section()` now takes keyword arguments and returns a dict, so the runner can derive the nav from it:
 
 ```python
 section(id="led", nav=("p.2", "LED indicator"), eyebrow="Prep task · page 2", title="LED voltage indicator",

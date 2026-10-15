@@ -23,12 +23,12 @@ All generated files go to `out/` (git-ignored). Set `PYTHON` to override the int
 
 ## Adding a guide
 
-Create `guides/<id>/`. `<id>` must be a valid Python identifier, e.g. `labb6`, because guides are imported as Python modules. The folder holds:
+Create `guides/<id>/`. `<id>` must be a valid Python identifier, e.g. `labb6`, because guides are imported as Python modules, and it can't be `index`. The folder holds:
 
 - `boards.mjs`: `export default { <key>: () => ({ b, names, info, pinned, VH, title, desc }) }`. Build `b` with `makeBoard()` from `../../engine/lib.mjs`; see `guides/labb5/boards.mjs`.
 - `guide.py`: `GUIDE = {"title", "eyebrow", "h1", "lede", "sections": [section(id=<key>, nav=(short, name), …)]}`, using the helpers in `engine.page_kit`. Every section `id` needs a board with the same key. An optional `"legend"` replaces the default legend. Keep the file free of side effects; the index imports it.
 - `schematics/`: hand-written SVGs with a 680-wide `viewBox`, strokes in `var(--p)`, and labels as `<text>` whose first word is the tag name.
-- Optional `schematics.py`: draws schematics with `engine.schlib` and writes them with `save(__file__, {name: svg})`.
+- Optional `schematics.py`: draws schematics with `engine.schlib` and writes them with `save(__file__, {name: svg})` under `if __name__ == "__main__":`.
 - Optional `pills.json`: hand-placed tag positions.
 
 A section's `schematic` file name must exist in exactly one of `guides/<id>/schematics/` or the generated output (`out/<id>/sch/`). Then run `./build.sh <id>`.

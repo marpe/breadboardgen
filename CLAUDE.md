@@ -33,7 +33,7 @@ A guide is a folder `guides/<id>/` (`<id>` must be a Python identifier; it's imp
 1. `engine/boards.mjs <id>` runs each builder in the default export of `guides/<id>/boards.mjs`. Builders make a board with `makeBoard()` from `engine/lib.mjs` and return `{ b, names, info, pinned, VH, title, desc }`; the runner places the tags and writes `out/<id>/<key>.svg` and `out/<id>/<key>.3d.json`. Both come from the same calls, so the drawing and the 3D view always agree.
 2. Optional `guides/<id>/schematics.py` draws schematics with `engine/schlib.py` and writes them to `out/<id>/sch/` with `save(__file__, {...})` (their own folder, so a schematic name can never collide with a board). Hand-written schematics live in `guides/<id>/schematics/`. A section's `schematic` name must exist in exactly one of the two places, or `build_page` stops with an error.
 3. `engine/build_page.py <id>` concatenates `engine/page-head.html` (fonts, CSS; each build script adds its own `<title>`) with the body built from `GUIDE` in `guides/<id>/guide.py`. All page text lives in `guide.py`: the `section(...)` calls carry ledes, node tables and cards, using helpers from `engine/page_kit.py`. A section's `id` is its board key and its nav anchor; its `nav` tuple is the nav label. Each breadboard figure holds `.view-iso` (the SVG) and `.view-3d` (a stage plus that board's model JSON). The page inlines `viewer3d.mjs` as a `text/plain` script and `page.mjs` as the page's module script.
-4. `engine/build_index.py` imports every `guides/*/guide.py` (so guide modules must be side-effect free) and writes `out/index.html`, one card per guide. Its index-only CSS is inline in `build_index.py`, since anything added to `page-head.html` lands in every guide page.
+4. `engine/build_index.py` imports every `guides/*/guide.py` (so guide modules must be side-effect free) and writes `out/index.html`, one card per guide that has a built `out/<id>.html`. `load_guide()` in `build_page.py` checks that `GUIDE` exists and has its required fields; both runners use it. Its index-only CSS is inline in `build_index.py`, since anything added to `page-head.html` lands in every guide page.
 
 ## Page behaviour (page.mjs)
 
@@ -114,5 +114,6 @@ Each builder in `guides/<id>/boards.mjs` returns `{ b, names, info, pinned, VH, 
 
 - Always open files in Python with `encoding="utf-8"`. The content has `Ω`, `µ` and `−`, and the Windows default (cp1252) crashes on them.
 - Line endings are LF (`.gitattributes`). `build.sh` breaks under CRLF.
-- Guide folder names must be valid Python identifiers (`labb6`, not `labb-6`); `build.sh` refuses others.
+- Guide folder names must be valid Python identifiers (`labb6`, not `labb-6`) and can't be `index`; `build.sh` refuses others.
+- A guide's `schematics.py` writes only under `if __name__ == "__main__":`, so importing it has no side effects.
 - Index-only CSS goes in `engine/build_index.py`, not `page-head.html`, which is inlined into every guide page.
