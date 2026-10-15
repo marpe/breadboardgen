@@ -193,7 +193,7 @@ S.append(section(
 S.append(section(
     "ast4", "Figure 4 · page 6", "Astable multivibrator",
     "Two transistors take turns switching each other on and off through the capacitors, so each collector makes a square wave. Values here are examples, since the PDF doesn't give any.",
-    f"{OUT}/sch_ast4.svg", "ast4",
+    f"{OUT}/labb5/sch_ast4.svg", "ast4",
     [
         (node("+9 V"), "Top + rail", "Supply red lead col 2; R1 at cols 7 and 14; R2 at cols 4 and 17"),
         (node("GND"), "Bottom − rail, top − rail via col 21 bridge", "Supply black lead col 1 (bottom); emitter jumpers from cols 5 and 16; CH1 clip col 8 and CH2 clip col 13 (top)"),
@@ -228,7 +228,7 @@ S.append(section(
 S.append(section(
     "ast5", "Figure 5 · page 6", "Variable astable multivibrator",
     "The Sagitta kit version: LEDs in the collector lines show the switching, and RP1 shifts resistance between the two base resistors so you can change the blink times. Values are examples.",
-    f"{OUT}/sch_ast5.svg", "ast5",
+    f"{OUT}/labb5/sch_ast5.svg", "ast5",
     [
         (node("+9 V"), "Top + rail, bottom + rail via col 20 bridge", "Supply red lead col 2; LED1 anode col 3; LED2 anode col 18; RP1 wiper jumper from col 10 (bottom)"),
         (node("GND"), "Bottom − rail, top − rail via col 21 bridge", "Supply black lead col 1 (bottom); emitter jumpers from cols 5 and 16; CH1 clip col 8 and CH2 clip col 13 (top)"),
