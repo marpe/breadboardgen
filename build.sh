@@ -20,6 +20,8 @@ for id in "${guides[@]}"; do
   fi
 done
 for id in "${guides[@]}"; do
+  # Start each guide from an empty folder, so a board or schematic removed from the guide can't survive as stale output.
+  rm -rf "out/$id"
   node engine/boards.mjs "$id"
   if [ -f "guides/$id/schematics.py" ]; then
     "$PYTHON" -m "guides.$id.schematics"
