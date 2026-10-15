@@ -14,6 +14,10 @@ for id in "${guides[@]}"; do
     echo "build.sh: guide folder '$id' must be a valid Python identifier (letters, digits, _)" >&2
     exit 1
   fi
+  if [ "$id" = index ]; then
+    echo "build.sh: guide folder can't be named 'index'; out/index.html is the guide list" >&2
+    exit 1
+  fi
   if [ ! -f "guides/$id/guide.py" ]; then
     echo "build.sh: no guide guides/$id/guide.py" >&2
     exit 1
